@@ -196,21 +196,18 @@ mod builders {
 
     fn build_action_def_stmt(pair: pest::iterators::Pair<Rule>) -> Result<ActionDefStmt, String> {
         for inner_pair in pair.into_inner() {
-            match inner_pair.as_rule() {
-                Rule::action_def_body => {
-                    let mut inner_rules = inner_pair.into_inner();
-                    let notes = inner_rules
-                        .clone() // Clone the iterator to use it later
-                        .find(|p| p.as_rule() == Rule::notes_block)
-                        .map(build_notes_block)
-                        .transpose()?;
-                    let outcomes = inner_rules
-                        .find(|p| p.as_rule() == Rule::outcomes_block)
-                        .map(build_outcomes_block)
-                        .transpose()?;
-                    return Ok(ActionDefStmt::new(notes, outcomes));
-                }
-                _ => {}
+            if inner_pair.as_rule() == Rule::action_def_body {
+                let mut inner_rules = inner_pair.into_inner();
+                let notes = inner_rules
+                    .clone() // Clone the iterator to use it later
+                    .find(|p| p.as_rule() == Rule::notes_block)
+                    .map(build_notes_block)
+                    .transpose()?;
+                let outcomes = inner_rules
+                    .find(|p| p.as_rule() == Rule::outcomes_block)
+                    .map(build_outcomes_block)
+                    .transpose()?;
+                return Ok(ActionDefStmt::new(notes, outcomes));
             }
         }
 
