@@ -23,10 +23,11 @@ ACTIONS = { "actions" }
 UNTIL = { "until" }
 
 // Names
+CHAR = { ASCII_ALPHANUMERIC | "." | "_" | "/" | "!" | "?" | " " | "," | "\"" | "\'" | "/" | "\\" }
+VARIABLE = { LBRACE ~ CHAR+ ~ RBRACE }
 ACTION_NAME = { "<" ~ NAME ~ ">" }
 OUTCOME_NAME = { "[" ~ NAME ~ "]" }
-CHAR = { ASCII_ALPHANUMERIC | "." | "_" | "/" | "!" | "?" | " " | "," | "\"" | "\'" | "/" | "\\" | "{" | "}" }
-NAME = { CHAR+ }
+NAME = { (CHAR | VARIABLE)+ }
 
 // Braces.
 LBRACE = { "{" }

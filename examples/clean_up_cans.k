@@ -1,13 +1,4 @@
-# /usr/bin/env klang
-# Defines a simple klang program.
 # This program is designed to get a robot to clean up soda cans.
-
-action <Teleop> {
-    outcomes {
-        success [Success]
-        failure [Failure]
-    }
-}
 
 action <Find {item}> {
     notes {
@@ -20,6 +11,7 @@ action <Find {item}> {
     outcomes {
         success [Found {item}]
         failure [Haven't moved in a while]
+        retry [Actively looking for {item}]
     }
 }
 
