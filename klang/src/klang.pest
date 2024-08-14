@@ -1,0 +1,59 @@
+// Whitespace and comments.
+WHITESPACE = _{ " " | "\n" | "\t" }
+COMMENT = _{ ("//" ~ (!"\n" ~ ANY)* ~ "\n") | ("/*" ~ (!"*/" ~ ANY)* ~ "*/")  | ("#" ~ (!"\n" ~ ANY)* ~ "\n") }
+
+// Actions.
+ACTION = { "action" }
+
+// Outcomes
+OUTCOMES = { "outcomes" }
+SUCCESS = { "success" }
+FAILURE = { "failure" }
+RETRY = { "retry" }
+HANDLER = { "handler" }
+
+// Notes
+NOTES = { "notes" }
+PREFER = { "prefer" }
+AVOID = { "avoid" }
+
+// Loops
+LOOP = { "loop" }
+ACTIONS = { "actions" }
+UNTIL = { "until" }
+
+// Names
+ACTION_NAME = { "<" ~ NAME ~ ">" }
+OUTCOME_NAME = { "[" ~ NAME ~ "]" }
+CHAR = { ASCII_ALPHANUMERIC | "." | "_" | "/" | "!" | "?" | " " | "," | "\"" | "\'" | "/" | "\\" | "{" | "}" }
+NAME = { CHAR+ }
+
+// Braces.
+LBRACE = { "{" }
+RBRACE = { "}" }
+
+// File input.
+file_input = { SOI ~ stmt* ~ EOI }
+
+// Statements.
+stmt = { action_def_stmt | action_call_stmt | loop_stmt }
+
+// Action statements.
+action_def_stmt = { ACTION ~ ACTION_NAME ~ LBRACE ~ action_def_body ~ RBRACE }
+action_def_body = { (notes_block | outcomes_block)+ }
+
+// Notes.
+notes_block = { NOTES ~ LBRACE ~ note* ~ RBRACE }
+note = { (PREFER | AVOID) ~ OUTCOME_NAME }
+
+// Outcomes.
+outcomes_block = { OUTCOMES ~ LBRACE ~ (outcome)* ~ RBRACE }
+outcome = { (SUCCESS | FAILURE | RETRY | HANDLER) ~ OUTCOME_NAME }
+
+// Action calls.
+action_call_stmt = { ACTION_NAME }
+
+// Loops.
+loop_stmt = { LOOP ~ LBRACE ~ actions_block ~ (RBRACE ~ UNTIL ~ LBRACE ~ condition)? ~ RBRACE }
+actions_block = { action_call_stmt* }
+condition = { OUTCOME_NAME* }

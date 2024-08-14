@@ -1,0 +1,17 @@
+[package]
+
+name = "klang"
+version = "0.1.0"
+authors = ["K-Scale Labs"]
+edition = "2021"
+
+[dependencies]
+
+pest = "2.6"
+pest_derive = "2.6"
+thiserror = "1.0"
+
+[[bin]]
+
+name = "klang"
+path = "src/main.rs"
