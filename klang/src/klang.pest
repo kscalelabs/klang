@@ -1,60 +1,84 @@
-// Whitespace and comments.
-WHITESPACE = _{ " " | "\n" | "\t" }
-COMMENT = _{ ("//" ~ (!"\n" ~ ANY)* ~ "\n") | ("/*" ~ (!"*/" ~ ANY)* ~ "*/")  | ("#" ~ (!"\n" ~ ANY)* ~ "\n") }
+// Pest Grammar for the Custom Language
 
-// Actions.
-ACTION = { "action" }
+// The root rule that starts the parsing process.
+program = _{ SOI ~ stmt* ~ EOI }
 
-// Outcomes
-OUTCOMES = { "outcomes" }
-SUCCESS = { "success" }
-FAILURE = { "failure" }
-RETRY = { "retry" }
-HANDLER = { "handler" }
+// Statements include function definitions, function calls, and other constructs.
+stmt = _{ ( import_stmt | function_def | expr_stmt ) }
 
-// Notes
-NOTES = { "notes" }
-PREFER = { "prefer" }
-AVOID = { "avoid" }
+// Import statement
+import_stmt = _{ "from" ~ IDENT ~ "import" ~ IDENT ~ ("," ~ IDENT)* }
 
-// Loops
-LOOP = { "loop" }
-ACTIONS = { "actions" }
-UNTIL = { "until" }
+// Function definition
+function_def = _{ "fn" ~ IDENT ~ "(" ~ param_list? ~ ")" ~ block }
 
-// Names
-CHAR = { ASCII_ALPHANUMERIC | "." | "_" | "/" | "!" | "?" | " " | "," | "\"" | "\'" | "/" | "\\" }
-VARIABLE = { LBRACE ~ CHAR+ ~ RBRACE }
-ACTION_NAME = { "<" ~ NAME ~ ">" }
-OUTCOME_NAME = { "[" ~ NAME ~ "]" }
-NAME = { (CHAR | VARIABLE)+ }
+param_list = _{ (IDENT ~ "=" ~ expr) ~ ("," ~ IDENT ~ "=" ~ expr)* }
 
-// Braces.
-LBRACE = { "{" }
-RBRACE = { "}" }
+// Block of statements enclosed in curly braces
+block = _{ "{" ~ stmt* ~ "}" }
 
-// File input.
-file_input = { SOI ~ stmt* ~ EOI }
+// Expression statement
+expr_stmt = _{ expr ~ ";"? }
 
-// Statements.
-stmt = { action_def_stmt | action_call_stmt | loop_stmt }
+// Expression (can be a function call, assignment, or binary operation)
+expr = _{ (
+    function_call
+    | assignment
+    | binary_op
+    | unary_op
+    | literal
+    | loop
+    | COMMENT
+    | IDENT
+) }
 
-// Action statements.
-action_def_stmt = { ACTION ~ ACTION_NAME ~ LBRACE ~ action_def_body ~ RBRACE }
-action_def_body = { (notes_block | outcomes_block)+ }
+// Function call with potential async operator `*`
+function_call = _{ ( async_call | standard_call ) }
+async_call = _{ "*" ~ standard_call }
+standard_call = _{ IDENT ~ "(" ~ arg_list? ~ ")" }
+arg_list = _{ expr ~ ("," ~ expr)* }
 
-// Notes.
-notes_block = { NOTES ~ LBRACE ~ note* ~ RBRACE }
-note = { (PREFER | AVOID) ~ OUTCOME_NAME }
+// Containers
+container = _{ list | dict 
+list = _{ "[" ~ expr ~ "," ~ expr ~ "]" }
 
-// Outcomes.
-outcomes_block = { OUTCOMES ~ LBRACE ~ (outcome)* ~ RBRACE }
-outcome = { (SUCCESS | FAILURE | RETRY | HANDLER) ~ OUTCOME_NAME }
+// Assignment statement
+assignment = _{ IDENT ~ "=" ~ expr }
 
-// Action calls.
-action_call_stmt = { ACTION_NAME }
+// Binary operation (addition, subtraction, etc.)
+binary_op = _{ expr ~ binary_operator ~ expr }
+binary_operator = _{ "+" | "-" | "*" | "/" | "?" | ":" }
 
-// Loops.
-loop_stmt = { LOOP ~ LBRACE ~ actions_block ~ (RBRACE ~ UNTIL ~ LBRACE ~ condition)? ~ RBRACE }
-actions_block = { action_call_stmt* }
-condition = { OUTCOME_NAME* }
+// Unary operation (negation, etc.)
+unary_op = _{ unary_operator ~ expr }
+unary_operator = _{ "-" | "!" }
+
+// Literals include numbers and units like `30deg`, `0.1rad`
+literal = _{ (
+    number_with_unit
+    | number
+    | string
+    | boolean
+) }
+
+number_with_unit = _{ number ~ unit }
+unit = _{ "deg" | "rad" | "m" | "cm" | "mm" | "ft" | "in" }
+
+number = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+boolean = _{ "true" | "false" }
+
+// Identifiers (function names, variable names, etc.)
+IDENT = @{ ASCII_ALPHANUMERIC+ }
+
+// A loop with `for` and `while` constructs
+loop = _{ ( for_loop | while_loop ) }
+
+for_loop = _{ "for" ~ IDENT ~ ":" ~ range ~ block }
+while_loop = _{ "while" ~ expr ~ block }
+
+// Comments
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
+
+// Whitespaces
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }

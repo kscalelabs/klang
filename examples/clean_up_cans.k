@@ -1,51 +1,44 @@
-# This program is designed to get a robot to clean up soda cans.
+from robot import move, ppo_standing, nn
 
-action <Find {item}> {
-    notes {
-        prefer [Move quickly]
-        avoid [Bumping into other objects]
-        avoid [Moving too hastily]
-        avoid [Moving slowly or staying in the same place for a long time]
+fn pick_up_apple_manual() {
+    x = 30deg
+    y = 30deg
+    *move("left_arm", joint=2, pos=x + y)
+}
+
+fn pick_up_apple() {
+    *nn(
+        “Pick up the apple”,
+        pos=[“Move hand close to the apple”],
+        neg=[“Move quickly”],
+        on_failure=pick_up_apple_manual,
+    )
+}
+
+fn random_arm_movement() {
+    for i : [1, 2, 3] {
+        *(
+            move("right_arm", joint=2, pos=30deg + i * 0.1rad),
+            move("right_arm", joint=3, pos=30deg + i * 0.5rad),
+        )
+        if (i > 1) {
+            move
+        }
     }
 
-    outcomes {
-        success [Found {item}]
-        failure [Haven't moved in a while]
-        retry [Actively looking for {item}]
+    counter = 0
+    flag = true
+    while counter < 5 {
+        *(
+            move("right_arm", joint=2, pos=30deg + flag ? 0.1rad : -0.1rad),
+            move("right_arm", joint=3, pos=30deg + flat ? 0.5rad : -0.5rad),
+        )
+        flag = !flag
+        counter += 1
     }
 }
 
-action <Pick up {item}> {
-    outcomes {
-        success [Holding {item}]
-        failure [Knocked over {item}]
-        retry [Not holding {item}]
-    }
-}
-
-action <Put {item} into {container}> {
-    outcomes {
-        success [{item} is inside {container} and we are not holding it]
-        failure [Dropped {item} outside the {container}]
-        retry [Still holding {item}]
-    }
-}
-
-action <Empty the soda can into the sink> {
-    outcomes {
-        success [Successfully emptied the soda can into the sink]
-        failure [Spilled soda outside the sink]
-        retry [There is still soda in the can]
-    }
-}
-
-loop {
-    <Find a soda can>
-    <Pick up the soda can>
-    <Find the sink>
-    <Empty the soda can into the sink>
-    <Find the recycling bin>
-    <Put the soda can into the recycling bin>
-} until {
-    [No more soda cans]
+fn main() {
+    // Run both functions in parallel
+    *(pick_up_apple(), ppo_standing(), random_arm_movement())
 }
