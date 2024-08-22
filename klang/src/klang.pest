@@ -1,13 +1,25 @@
 // Pest Grammar for the Custom Language
 
-// The root rule that starts the parsing process.
-program = _{ SOI ~ stmt* ~ EOI }
+// Comments
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
+
+// Whitespaces
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
+
+// Identifiers (function names, variable names, etc.)
+IDENT = @{ ASCII_ALPHANUMERIC+ ~ ("_" ~ ASCII_ALPHANUMERIC+)* }
+
+// File input (the program)
+file_input = { SOI ~ stmt* ~ EOI }
 
 // Statements include function definitions, function calls, and other constructs.
 stmt = _{ ( import_stmt | function_def | expr_stmt ) }
 
 // Import statement
-import_stmt = _{ "from" ~ IDENT ~ "import" ~ IDENT ~ ("," ~ IDENT)* }
+import_stmt = { "from" ~ module ~ "import" ~ import_list }
+module = @{ IDENT ~ ( "." ~ IDENT )* }
+import_list = { import_item ~ ("," ~ import_item )* }
+import_item = @{ IDENT }
 
 // Function definition
 function_def = _{ "fn" ~ IDENT ~ "(" ~ param_list? ~ ")" ~ block }
@@ -27,10 +39,11 @@ expr = _{ (
     | binary_op
     | unary_op
     | literal
-    | loop
+    | loop_expr
     | COMMENT
     | IDENT
 ) }
+
 
 // Function call with potential async operator `*`
 function_call = _{ ( async_call | standard_call ) }
@@ -39,15 +52,20 @@ standard_call = _{ IDENT ~ "(" ~ arg_list? ~ ")" }
 arg_list = _{ expr ~ ("," ~ expr)* }
 
 // Containers
-container = _{ list | dict 
+container = _{ list | dict }
 list = _{ "[" ~ expr ~ "," ~ expr ~ "]" }
+dict = _{ "{" ~ pair ~ ("," ~ pair)* ~ "}" }
+pair = _{ key ~ ":" ~ value }
+key = _{ IDENT | literal }
+value = _{ expr }
 
 // Assignment statement
 assignment = _{ IDENT ~ "=" ~ expr }
 
-// Binary operation (addition, subtraction, etc.)
-binary_op = _{ expr ~ binary_operator ~ expr }
+// Binary operation
+binary_op = _{ primary_expr ~ (binary_operator ~ primary_expr)* }
 binary_operator = _{ "+" | "-" | "*" | "/" | "?" | ":" }
+primary_expr = _{ IDENT | literal | function_call | "(" ~ expr ~ ")" }
 
 // Unary operation (negation, etc.)
 unary_op = _{ unary_operator ~ expr }
@@ -68,17 +86,11 @@ number = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
 boolean = _{ "true" | "false" }
 
-// Identifiers (function names, variable names, etc.)
-IDENT = @{ ASCII_ALPHANUMERIC+ }
+// Range for which to loop through in for loop
+range = _{ "[" ~ (NUMBER ~ ("," ~ NUMBER)*) ~ "]" }
 
 // A loop with `for` and `while` constructs
-loop = _{ ( for_loop | while_loop ) }
+loop_expr = _{ ( for_loop | while_loop ) }
 
 for_loop = _{ "for" ~ IDENT ~ ":" ~ range ~ block }
 while_loop = _{ "while" ~ expr ~ block }
-
-// Comments
-COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
-
-// Whitespaces
-WHITESPACE = _{ " " | "\t" | "\n" | "\r" }

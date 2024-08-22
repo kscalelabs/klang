@@ -2,16 +2,19 @@ use pest::error::Error as PestError;
 use pest::error::LineColLocation;
 use pest::Parser;
 use pest::Position;
+use pest::iterators::Pair;
 use pest_derive::Parser;
 use std::fs;
 use std::path::Path;
+use std::collections::HashMap;
 use thiserror::Error;
+
 
 #[derive(Parser)]
 #[grammar = "klang.pest"]
 pub struct Klang;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq)]
 pub struct Program {
     pub statements: Vec<Stmt>,
 }
@@ -22,82 +25,114 @@ impl Program {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
-    ActionDef(ActionDefStmt),
-    ActionCall(ActionCallStmt),
-    Loop(LoopStmt),
+    Import(ImportStmt),
+    FunctionDef(FunctionDef),
+    Expr(Expr),
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct ActionDefStmt {
-    pub notes: Option<NotesBlock>,
-    pub outcomes: Option<OutcomesBlock>,
+#[derive(Debug, PartialEq, Clone)]
+pub struct ImportStmt {
+    pub module: String,
+    pub imports: Vec<String>,
 }
 
-impl ActionDefStmt {
-    pub fn new(notes: Option<NotesBlock>, outcomes: Option<OutcomesBlock>) -> Self {
-        ActionDefStmt { notes, outcomes }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct ActionCallStmt {
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionDef {
     pub name: String,
+    pub params: Vec<(String, Expr)>,
+    pub body: Vec<Stmt>,
 }
 
-impl ActionCallStmt {
-    pub fn new(name: String) -> Self {
-        ActionCallStmt { name }
-    }
+#[derive(Debug, PartialEq, Clone)]
+pub enum Expr {
+    FunctionCall(FunctionCall),
+    Assignment(Assignment),
+    BinaryOp(Box<BinaryOp>),
+    UnaryOp(Box<UnaryOp>),
+    Literal(Literal),
+    Loop(Loop),
+    Comment(String),
+    Identifier(String),
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct LoopStmt {
-    pub actions: Vec<ActionCallStmt>,
-    pub condition: Option<Vec<String>>,
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionCall {
+    pub is_async: bool,
+    pub name: String,
+    pub args: Vec<Expr>,
 }
 
-impl LoopStmt {
-    pub fn new(actions: Vec<ActionCallStmt>, condition: Option<Vec<String>>) -> Self {
-        LoopStmt { actions, condition }
-    }
+#[derive(Debug, PartialEq, Clone)]
+pub struct Assignment {
+    pub target: String,
+    pub value: Box<Expr>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct NotesBlock {
-    pub notes: Vec<Note>,
+#[derive(Debug, PartialEq, Clone)]
+pub struct BinaryOp {
+    pub left: Expr,
+    pub operator: BinaryOperator,
+    pub right: Expr,
 }
 
-impl NotesBlock {
-    pub fn new(notes: Vec<Note>) -> Self {
-        NotesBlock { notes }
-    }
+#[derive(Debug, PartialEq, Clone)]
+pub enum BinaryOperator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    TernaryIf,
+    TernaryElse,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum Note {
-    Prefer(String),
-    Avoid(String),
+#[derive(Debug, PartialEq, Clone)]
+pub struct UnaryOp {
+    pub operator: UnaryOperator,
+    pub expr: Expr,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct OutcomesBlock {
-    pub outcomes: Vec<Outcome>,
+#[derive(Debug, PartialEq, Clone)]
+pub enum UnaryOperator {
+    Negate,
+    Not,
 }
 
-impl OutcomesBlock {
-    pub fn new(outcomes: Vec<Outcome>) -> Self {
-        OutcomesBlock { outcomes }
-    }
+#[derive(Debug, PartialEq, Clone)]
+pub enum Literal {
+    Number(f64),
+    NumberWithUnit(f64, String),
+    String(String),
+    Boolean(bool),
+    List(Vec<Expr>),
+    Dict(HashMap<String, Expr>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum Outcome {
-    Success(String),
-    Failure(String),
-    Retry(String),
-    Handler(String),
+#[derive(Debug, PartialEq, Clone)]
+pub enum Loop {
+    For(ForLoop),
+    While(WhileLoop),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ForLoop {
+    pub iterator: String,
+    pub iterable: Box<Expr>,
+    pub body: Vec<Stmt>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct WhileLoop {
+    pub condition: Box<Expr>,
+    pub body: Vec<Stmt>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Range {
+    pub start: Box<Expr>,
+    pub end: Box<Expr>,
+    pub step: Option<Box<Expr>>,
 }
 
 #[derive(Debug, Error)]
@@ -167,115 +202,153 @@ pub fn parse_file_to_ast<P: AsRef<Path>>(path: P) -> Result<Program, ParseError>
 mod builders {
     use super::*;
 
-    pub fn build_ast(pair: pest::iterators::Pair<Rule>) -> Result<Program, String> {
-        let mut statements = Vec::new();
-
-        for inner_pair in pair.into_inner() {
-            match inner_pair.as_rule() {
-                Rule::stmt => {
-                    let mut inner_rules = inner_pair.into_inner();
-                    let stmt = build_stmt(inner_rules.next().unwrap())?;
-                    statements.push(stmt);
-                }
-                Rule::EOI => {}
-                _ => unreachable!(),
-            }
-        }
-
-        Ok(Program::new(statements))
-    }
-
-    fn build_stmt(pair: pest::iterators::Pair<Rule>) -> Result<Stmt, String> {
-        match pair.as_rule() {
-            Rule::action_def_stmt => build_action_def_stmt(pair).map(Stmt::ActionDef),
-            Rule::action_call_stmt => build_action_call_stmt(pair).map(Stmt::ActionCall),
-            Rule::loop_stmt => build_loop_stmt(pair).map(Stmt::Loop),
-            _ => unreachable!(),
-        }
-    }
-
-    fn build_action_def_stmt(pair: pest::iterators::Pair<Rule>) -> Result<ActionDefStmt, String> {
-        for inner_pair in pair.into_inner() {
-            if inner_pair.as_rule() == Rule::action_def_body {
-                let mut inner_rules = inner_pair.into_inner();
-                let notes = inner_rules
-                    .clone() // Clone the iterator to use it later
-                    .find(|p| p.as_rule() == Rule::notes_block)
-                    .map(build_notes_block)
-                    .transpose()?;
-                let outcomes = inner_rules
-                    .find(|p| p.as_rule() == Rule::outcomes_block)
-                    .map(build_outcomes_block)
-                    .transpose()?;
-                return Ok(ActionDefStmt::new(notes, outcomes));
-            }
-        }
-
-        unreachable!()
-    }
-
-    fn build_notes_block(pair: pest::iterators::Pair<Rule>) -> Result<NotesBlock, String> {
-        let notes = pair
-            .into_inner()
-            .filter(|p| p.as_rule() == Rule::note)
-            .map(|note_pair| {
-                let mut inner_rules = note_pair.into_inner();
-                let note_type = inner_rules.next().unwrap().as_rule();
-                let note_name = inner_rules.next().unwrap().as_str().to_string();
-                match note_type {
-                    Rule::PREFER => Note::Prefer(note_name),
-                    Rule::AVOID => Note::Avoid(note_name),
-                    _ => unreachable!(),
-                }
-            })
-            .collect();
-
-        Ok(NotesBlock::new(notes))
-    }
-
-    fn build_outcomes_block(pair: pest::iterators::Pair<Rule>) -> Result<OutcomesBlock, String> {
-        let outcomes = pair
-            .into_inner()
-            .filter(|p| p.as_rule() == Rule::outcome)
-            .map(|outcome_pair| {
-                let mut inner_rules = outcome_pair.into_inner();
-                let outcome_type = inner_rules.next().unwrap().as_rule();
-                let outcome_name = inner_rules.next().unwrap().as_str().to_string();
-                match outcome_type {
-                    Rule::SUCCESS => Outcome::Success(outcome_name),
-                    Rule::FAILURE => Outcome::Failure(outcome_name),
-                    Rule::RETRY => Outcome::Retry(outcome_name),
-                    Rule::HANDLER => Outcome::Handler(outcome_name),
-                    _ => unreachable!(),
-                }
-            })
-            .collect();
-
-        Ok(OutcomesBlock::new(outcomes))
-    }
-
-    fn build_action_call_stmt(pair: pest::iterators::Pair<Rule>) -> Result<ActionCallStmt, String> {
-        let name = pair.into_inner().next().unwrap().as_str().to_string();
-        Ok(ActionCallStmt::new(name))
-    }
-
-    fn build_loop_stmt(pair: pest::iterators::Pair<Rule>) -> Result<LoopStmt, String> {
-        let mut inner_rules = pair.into_inner();
-
-        let actions: Vec<_> = inner_rules
-            .clone() // Clone the iterator to use it later
-            .filter(|p| p.as_rule() == Rule::action_call_stmt)
-            .map(build_action_call_stmt)
+    pub fn build_ast(pair: Pair<Rule>) -> Result<Program, String> {
+        let statements = pair.into_inner()
+            .filter(|p| p.as_rule() == Rule::stmt)
+            .map(build_stmt)
             .collect::<Result<Vec<_>, _>>()?;
 
-        let condition = inner_rules
-            .find(|p| p.as_rule() == Rule::condition)
-            .map(|p| {
-                p.into_inner()
-                    .map(|outcome_name| outcome_name.as_str().to_string())
-                    .collect()
-            });
+        Ok(Program { statements })
+    }
 
-        Ok(LoopStmt::new(actions, condition))
+    fn build_stmt(pair: Pair<Rule>) -> Result<Stmt, String> {
+        match pair.as_rule() {
+            Rule::import_stmt => build_import_stmt(pair).map(Stmt::Import),
+            Rule::function_def => build_function_def(pair).map(Stmt::FunctionDef),
+            Rule::expr_stmt => build_expr(pair.into_inner().next().unwrap()).map(Stmt::Expr),
+            _ => Err(format!("Unexpected rule: {:?}", pair.as_rule())),
+        }
+    }
+
+    fn build_import_stmt(pair: Pair<Rule>) -> Result<ImportStmt, String> {
+        let mut inner = pair.into_inner();
+        let module = inner.next().unwrap().as_str().to_string();
+        let imports = inner.map(|p| p.as_str().to_string()).collect();
+        Ok(ImportStmt { module, imports })
+    }
+
+    fn build_function_def(pair: Pair<Rule>) -> Result<FunctionDef, String> {
+        let mut inner = pair.into_inner();
+        let name = inner.next().unwrap().as_str().to_string();
+        let params = build_param_list(inner.next().unwrap())?;
+        let body = inner.next().unwrap().into_inner()
+            .map(build_stmt)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(FunctionDef { name, params, body })
+    }
+
+    fn build_param_list(pair: Pair<Rule>) -> Result<Vec<(String, Expr)>, String> {
+        pair.into_inner()
+            .map(|p| {
+                let mut inner = p.into_inner();
+                let name = inner.next().unwrap().as_str().to_string();
+                let expr = build_expr(inner.next().unwrap())?;
+                Ok((name, expr))
+            })
+            .collect()
+    }
+
+    fn build_expr(pair: Pair<Rule>) -> Result<Expr, String> {
+        match pair.as_rule() {
+            Rule::function_call => build_function_call(pair).map(Expr::FunctionCall),
+            Rule::assignment => build_assignment(pair).map(Expr::Assignment),
+            Rule::binary_op => build_binary_op(pair).map(|op| Expr::BinaryOp(Box::new(op))),
+            Rule::unary_op => build_unary_op(pair).map(|op| Expr::UnaryOp(Box::new(op))),
+            Rule::literal => build_literal(pair).map(Expr::Literal),
+            Rule::loop_expr => build_loop(pair).map(Expr::Loop),
+            Rule::COMMENT => Ok(Expr::Comment(pair.as_str().to_string())),
+            Rule::IDENT => Ok(Expr::Identifier(pair.as_str().to_string())),
+            _ => Err(format!("Unexpected rule in expr: {:?}", pair.as_rule())),
+        }
+    }
+
+    fn build_function_call(pair: Pair<Rule>) -> Result<FunctionCall, String> {
+        let mut inner = pair.into_inner();
+        let is_async = inner.next().unwrap().as_rule() == Rule::async_call;
+        let call = if is_async { inner.next().unwrap() } else { inner.next().unwrap() };
+        let mut call_inner = call.into_inner();
+        let name = call_inner.next().unwrap().as_str().to_string();
+        let args = call_inner.next().unwrap().into_inner()
+            .map(build_expr)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(FunctionCall { is_async, name, args })
+    }
+
+    fn build_assignment(pair: Pair<Rule>) -> Result<Assignment, String> {
+        let mut inner = pair.into_inner();
+        let target = inner.next().unwrap().as_str().to_string();
+        let value = build_expr(inner.next().unwrap())?;
+        Ok(Assignment { target, value: Box::new(value) })
+    }
+
+    fn build_binary_op(pair: Pair<Rule>) -> Result<BinaryOp, String> {
+        let mut inner = pair.into_inner();
+        let left = build_expr(inner.next().unwrap())?;
+        let operator = match inner.next().unwrap().as_str() {
+            "+" => BinaryOperator::Add,
+            "-" => BinaryOperator::Subtract,
+            "*" => BinaryOperator::Multiply,
+            "/" => BinaryOperator::Divide,
+            "?" => BinaryOperator::TernaryIf,
+            ":" => BinaryOperator::TernaryElse,
+            _ => return Err("Unknown binary operator".to_string()),
+        };
+        let right = build_expr(inner.next().unwrap())?;
+        Ok(BinaryOp { left, operator, right })
+    }
+
+    fn build_unary_op(pair: Pair<Rule>) -> Result<UnaryOp, String> {
+        let mut inner = pair.into_inner();
+        let operator = match inner.next().unwrap().as_str() {
+            "-" => UnaryOperator::Negate,
+            "!" => UnaryOperator::Not,
+            _ => return Err("Unknown unary operator".to_string()),
+        };
+        let expr = build_expr(inner.next().unwrap())?;
+        Ok(UnaryOp { operator, expr })
+    }
+
+    fn build_literal(pair: Pair<Rule>) -> Result<Literal, String> {
+        let inner = pair.into_inner().next().unwrap();
+        match inner.as_rule() {
+            Rule::number_with_unit => {
+                let mut parts = inner.into_inner();
+                let number = parts.next().unwrap().as_str().parse().unwrap();
+                let unit = parts.next().unwrap().as_str().to_string();
+                Ok(Literal::NumberWithUnit(number, unit))
+            },
+            Rule::number => Ok(Literal::Number(inner.as_str().parse().unwrap())),
+            Rule::string => Ok(Literal::String(inner.into_inner().next().unwrap().as_str().to_string())),
+            Rule::boolean => Ok(Literal::Boolean(inner.as_str() == "true")),
+            _ => Err(format!("Unexpected literal type: {:?}", inner.as_rule())),
+        }
+    }
+
+    fn build_loop(pair: Pair<Rule>) -> Result<Loop, String> {
+        let inner = pair.into_inner().next().unwrap();
+        match inner.as_rule() {
+            Rule::for_loop => build_for_loop(inner),
+            Rule::while_loop => build_while_loop(inner),
+            _ => Err(format!("Unexpected loop type: {:?}", inner.as_rule())),
+        }
+    }
+
+    fn build_for_loop(pair: Pair<Rule>) -> Result<Loop, String> {
+        let mut inner = pair.into_inner();
+        let iterator = inner.next().unwrap().as_str().to_string();
+        let iterable = build_expr(inner.next().unwrap())?;
+        let body = inner.next().unwrap().into_inner()
+            .map(build_stmt)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Loop::For(ForLoop { iterator, iterable: Box::new(iterable), body }))
+    }
+
+    fn build_while_loop(pair: Pair<Rule>) -> Result<Loop, String> {
+        let mut inner = pair.into_inner();
+        let condition = build_expr(inner.next().unwrap())?;
+        let body = inner.next().unwrap().into_inner()
+            .map(build_stmt)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Loop::While(WhileLoop { condition: Box::new(condition), body }))
     }
 }
