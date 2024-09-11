@@ -1,25 +1,45 @@
 pub mod ast;
 pub mod tests;
 
-use ast::parse_file_to_ast;
+use crate::ast::{KlangParser, Rule};
+use pest::Parser;
+use std::env;
+use std::fs;
 
 fn main() {
-    // Throw an error if incorrect number of arguments.
-    if std::env::args().count() != 2 {
-        eprintln!(
-            "Incorrect number of arguments (got {}, expected 1)",
-            std::env::args().count() - 1
-        );
+    // Get the file path from command line arguments
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <file_path>", args[0]);
         std::process::exit(1);
     }
+    let file_path = &args[1];
 
-    let filename = std::env::args()
-        .nth(1)
-        .expect("Missing filename argument! Usage: klang <filename>");
-    let ast = parse_file_to_ast(filename);
+    // Read the file contents
+    let unparsed_file = match fs::read_to_string(file_path) {
+        Ok(contents) => contents,
+        Err(e) => {
+            eprintln!("Error reading file '{}': {}", file_path, e);
+            std::process::exit(1);
+        }
+    };
 
-    match ast {
-        Ok(ast) => println!("{:#?}", ast),
-        Err(e) => eprintln!("{}", e),
+    // Parse the file
+    match KlangParser::parse(Rule::program, &unparsed_file) {
+        Ok(pairs) => {
+            println!("Successfully parsed the file:");
+            for pair in pairs {
+                if pair.as_rule() == Rule::expression {
+                    let expr = KlangParser::parse_expression(pair.into_inner());
+                    println!("{:#?}", expr);
+                } else {
+                    println!("{:#?}", pair);
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Error parsing file: {}", e);
+            std::process::exit(1);
+        }
     }
 }

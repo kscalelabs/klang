@@ -30,13 +30,19 @@ if_statement = { "if" ~ "(" ~ expression ~ ")" ~ block }
 
 parallel_execution = { "*" ~ "(" ~ expression ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-expression = {
+expression = { atom ~ (infix ~ atom)* }
+atom = _{
     function_call |
-    binary_operation |
-    unary_operation |
     literal |
-    identifier
+    identifier |
+    "(" ~ expression ~ ")"
 }
+
+infix = _{ add | subtract | multiply | divide }
+add = { "+" }
+subtract = { "-" }
+multiply = { "*" }
+divide = { "/" }
 
 function_call = { identifier ~ "(" ~ (expression ~ ("," ~ expression)*)? ~ ")" }
 binary_operation = { expression ~ operator ~ expression }
@@ -64,4 +70,3 @@ array = { "[" ~ (expression ~ ("," ~ expression)*)? ~ "]" }
 
 identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 operator = { "+" | "-" | "*" | "/" | "=" | "!" | "?" | ":" }
-
