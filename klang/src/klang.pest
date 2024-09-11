@@ -1,84 +1,67 @@
-// Pest Grammar for the Custom Language
+// Pest grammar for Klang.
 
-// The root rule that starts the parsing process.
-program = _{ SOI ~ stmt* ~ EOI }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" }
 
-// Statements include function definitions, function calls, and other constructs.
-stmt = _{ ( import_stmt | function_def | expr_stmt ) }
+program = { SOI ~ import_statement? ~ function_def* ~ EOI }
 
-// Import statement
-import_stmt = _{ "from" ~ IDENT ~ "import" ~ IDENT ~ ("," ~ IDENT)* }
+import_statement = { "from" ~ identifier ~ "import" ~ (identifier ~ ("," ~ identifier)*) }
 
-// Function definition
-function_def = _{ "fn" ~ IDENT ~ "(" ~ param_list? ~ ")" ~ block }
+function_def = { "fn" ~ identifier ~ "(" ~ parameter_list? ~ ")" ~ block }
+parameter_list = { identifier ~ ("," ~ identifier)* }
 
-param_list = _{ (IDENT ~ "=" ~ expr) ~ ("," ~ IDENT ~ "=" ~ expr)* }
+block = { "{" ~ statement* ~ "}" }
 
-// Block of statements enclosed in curly braces
-block = _{ "{" ~ stmt* ~ "}" }
+statement = {
+    expression_stmt |
+    assignment_stmt |
+    for_loop |
+    while_loop |
+    if_statement |
+    parallel_execution
+}
 
-// Expression statement
-expr_stmt = _{ expr ~ ";"? }
+expression_stmt = { expression ~ ";" }
+assignment_stmt = { identifier ~ "=" ~ expression ~ ";" }
 
-// Expression (can be a function call, assignment, or binary operation)
-expr = _{ (
-    function_call
-    | assignment
-    | binary_op
-    | unary_op
-    | literal
-    | loop
-    | COMMENT
-    | IDENT
-) }
+for_loop = { "for" ~ identifier ~ ":" ~ expression ~ block }
+while_loop = { "while" ~ expression ~ block }
+if_statement = { "if" ~ "(" ~ expression ~ ")" ~ block }
 
-// Function call with potential async operator `*`
-function_call = _{ ( async_call | standard_call ) }
-async_call = _{ "*" ~ standard_call }
-standard_call = _{ IDENT ~ "(" ~ arg_list? ~ ")" }
-arg_list = _{ expr ~ ("," ~ expr)* }
+parallel_execution = { "*" ~ "(" ~ expression ~ ("," ~ expression)* ~ ")" ~ ";" }
 
-// Containers
-container = _{ list | dict 
-list = _{ "[" ~ expr ~ "," ~ expr ~ "]" }
+expression = {
+    function_call |
+    binary_operation |
+    unary_operation |
+    literal |
+    identifier
+}
 
-// Assignment statement
-assignment = _{ IDENT ~ "=" ~ expr }
+function_call = { identifier ~ "(" ~ (expression ~ ("," ~ expression)*)? ~ ")" }
+binary_operation = { expression ~ operator ~ expression }
+unary_operation = { operator ~ expression }
 
-// Binary operation (addition, subtraction, etc.)
-binary_op = _{ expr ~ binary_operator ~ expr }
-binary_operator = _{ "+" | "-" | "*" | "/" | "?" | ":" }
+literal = { number | string | boolean | array }
+number = @{
+    ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ unit?
+}
 
-// Unary operation (negation, etc.)
-unary_op = _{ unary_operator ~ expr }
-unary_operator = _{ "-" | "!" }
+unit = @{
+    // Length units (metric)
+    "mm" | "cm" | "m" | "km" |
+    // Length units (imperial)
+    "in" | "ft" | "yd" | "mi" |
+    // Time units
+    "ms" | "s" | "min" | "hr" | "day" |
+    // Angle units
+    "deg" | "rad"
+}
 
-// Literals include numbers and units like `30deg`, `0.1rad`
-literal = _{ (
-    number_with_unit
-    | number
-    | string
-    | boolean
-) }
-
-number_with_unit = _{ number ~ unit }
-unit = _{ "deg" | "rad" | "m" | "cm" | "mm" | "ft" | "in" }
-
-number = @{ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
 string = @{ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
-boolean = _{ "true" | "false" }
+boolean = { "true" | "false" }
+array = { "[" ~ (expression ~ ("," ~ expression)*)? ~ "]" }
 
-// Identifiers (function names, variable names, etc.)
-IDENT = @{ ASCII_ALPHANUMERIC+ }
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+operator = { "+" | "-" | "*" | "/" | "=" | "!" | "?" | ":" }
 
-// A loop with `for` and `while` constructs
-loop = _{ ( for_loop | while_loop ) }
-
-for_loop = _{ "for" ~ IDENT ~ ":" ~ range ~ block }
-while_loop = _{ "while" ~ expr ~ block }
-
-// Comments
-COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
-
-// Whitespaces
-WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
