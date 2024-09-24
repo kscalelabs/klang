@@ -3,9 +3,7 @@ COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" }
 
 EOL = _{ ";" }
 
-program = { SOI ~ import_statement? ~ function_def* ~ EOI }
-
-import_statement = { "from" ~ identifier ~ "import" ~ (identifier ~ ("," ~ identifier)*) }
+program = { SOI ~ function_def* ~ EOI }
 
 function_def = { "fn" ~ identifier ~ "(" ~ parameter_list? ~ ")" ~ doc_string? ~ block }
 parameter_list = { identifier ~ ( "," ~ identifier )* ~ ( "," )? }
