@@ -1,5 +1,3 @@
-from robot import move, ppo_standing, nn
-
 fn pick_up_apple_manual() : "Pick up an apple manually" {
     x = 30deg;
     y = 30deg;

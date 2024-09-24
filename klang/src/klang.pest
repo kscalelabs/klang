@@ -3,9 +3,7 @@ COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" }
 
 EOL = _{ ";" }
 
-program = { SOI ~ import_statement? ~ function_def* ~ EOI }
-
-import_statement = { "from" ~ identifier ~ "import" ~ (identifier ~ ("," ~ identifier)*) }
+program = { SOI ~ function_def* ~ EOI }
 
 function_def = { "fn" ~ identifier ~ "(" ~ parameter_list? ~ ")" ~ doc_string? ~ block }
 parameter_list = { identifier ~ ( "," ~ identifier )* ~ ( "," )? }
@@ -18,9 +16,12 @@ statement = {
         expression_stmt |
         for_loop |
         while_loop |
-        if_statement
+        if_statement |
+        empty_stmt
     )
 }
+
+empty_stmt = { EOL }
 
 assignment_stmt = { identifier ~ assign_op ~ expression ~ EOL }
 assign_op = { "=" | "+=" | "-=" | "*=" | "/=" }
@@ -30,30 +31,20 @@ while_loop = { "while" ~ expression ~ block }
 if_statement = { "if" ~ "(" ~ expression ~ ")" ~ block }
 
 expression_stmt = { expression ~ EOL }
-
 expression = { conditional }
-
 conditional = { logical_or ~ ( "?" ~ expression ~ ":" ~ expression )? }
-
 logical_or = { logical_and ~ ( "||" ~ logical_and )* }
-
 logical_and = { equality ~ ( "&&" ~ equality )* }
-
 equality = { comparison ~ ( ( "==" | "!=" ) ~ comparison )* }
-
 comparison = { additive ~ ( ( "<" | ">" | "<=" | ">=" ) ~ additive )* }
-
 additive = { multiplicative ~ ( ( "+" | "-" ) ~ multiplicative )* }
-
 multiplicative = { unary ~ ( ( "*" | "/" ) ~ unary )* }
-
 unary = { ( "!" | "-" | "*" )* ~ primary }
 
 primary = {
     function_call |
     literal |
-    identifier |
-    tuple
+    identifier
 }
 
 tuple = { "(" ~ expression_list ~ ")" }
