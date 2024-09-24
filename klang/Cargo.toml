@@ -16,3 +16,11 @@ lazy_static = "1.4.0"
 
 name = "klang"
 path = "src/main.rs"
+
+[[test]]
+name = "integration_test"
+path = "src/test.rs"
+
+[lib]
+name = "klang"
+path = "src/lib.rs"
