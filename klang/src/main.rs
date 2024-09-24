@@ -10,7 +10,7 @@ fn main() {
     }
     let file_path = &args[1];
 
-    let parsed_file = match read_and_parse_file(&Path::new(file_path)) {
+    let parsed_file = match read_and_parse_file(Path::new(file_path)) {
         Ok(parsed) => parsed,
         Err(e) => {
             eprintln!("{}", e);
