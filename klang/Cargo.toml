@@ -7,11 +7,20 @@ edition = "2021"
 
 [dependencies]
 
-pest = "2.6"
-pest_derive = "2.6"
+pest = "2.5"
+pest_derive = "2.5"
 thiserror = "1.0"
+lazy_static = "1.4.0"
 
 [[bin]]
 
 name = "klang"
 path = "src/main.rs"
+
+[[test]]
+name = "integration_test"
+path = "src/test.rs"
+
+[lib]
+name = "klang"
+path = "src/lib.rs"

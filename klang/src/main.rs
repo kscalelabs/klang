@@ -1,25 +1,22 @@
-pub mod ast;
-pub mod tests;
-
-use ast::parse_file_to_ast;
+use klang::read_and_parse_file;
+use std::env;
+use std::path::Path; // Import from the library
 
 fn main() {
-    // Throw an error if incorrect number of arguments.
-    if std::env::args().count() != 2 {
-        eprintln!(
-            "Incorrect number of arguments (got {}, expected 1)",
-            std::env::args().count() - 1
-        );
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <file_path>", args[0]);
         std::process::exit(1);
     }
+    let file_path = &args[1];
 
-    let filename = std::env::args()
-        .nth(1)
-        .expect("Missing filename argument! Usage: klang <filename>");
-    let ast = parse_file_to_ast(filename);
+    let parsed_file = match read_and_parse_file(Path::new(file_path)) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
 
-    match ast {
-        Ok(ast) => println!("{:#?}", ast),
-        Err(e) => eprintln!("{}", e),
-    }
+    println!("{}", parsed_file);
 }

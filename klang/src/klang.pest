@@ -1,60 +1,94 @@
-// Whitespace and comments.
-WHITESPACE = _{ " " | "\n" | "\t" }
-COMMENT = _{ ("//" ~ (!"\n" ~ ANY)* ~ "\n") | ("/*" ~ (!"*/" ~ ANY)* ~ "*/")  | ("#" ~ (!"\n" ~ ANY)* ~ "\n") }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* ~ "\n" }
 
-// Actions.
-ACTION = { "action" }
+EOL = _{ ";" }
 
-// Outcomes
-OUTCOMES = { "outcomes" }
-SUCCESS = { "success" }
-FAILURE = { "failure" }
-RETRY = { "retry" }
-HANDLER = { "handler" }
+program = { SOI ~ import_statement? ~ function_def* ~ EOI }
 
-// Notes
-NOTES = { "notes" }
-PREFER = { "prefer" }
-AVOID = { "avoid" }
+import_statement = { "from" ~ identifier ~ "import" ~ (identifier ~ ("," ~ identifier)*) }
 
-// Loops
-LOOP = { "loop" }
-ACTIONS = { "actions" }
-UNTIL = { "until" }
+function_def = { "fn" ~ identifier ~ "(" ~ parameter_list? ~ ")" ~ doc_string? ~ block }
+parameter_list = { identifier ~ ( "," ~ identifier )* ~ ( "," )? }
+doc_string = { ":" ~ string }
 
-// Names
-CHAR = { ASCII_ALPHANUMERIC | "." | "_" | "/" | "!" | "?" | " " | "," | "\"" | "\'" | "/" | "\\" }
-VARIABLE = { LBRACE ~ CHAR+ ~ RBRACE }
-ACTION_NAME = { "<" ~ NAME ~ ">" }
-OUTCOME_NAME = { "[" ~ NAME ~ "]" }
-NAME = { (CHAR | VARIABLE)+ }
+block = { "{" ~ statement* ~ "}" }
+statement = {
+    (
+        assignment_stmt |
+        expression_stmt |
+        for_loop |
+        while_loop |
+        if_statement
+    )
+}
 
-// Braces.
-LBRACE = { "{" }
-RBRACE = { "}" }
+assignment_stmt = { identifier ~ assign_op ~ expression ~ EOL }
+assign_op = { "=" | "+=" | "-=" | "*=" | "/=" }
 
-// File input.
-file_input = { SOI ~ stmt* ~ EOI }
+for_loop = { "for" ~ identifier ~ ":" ~ expression ~ block }
+while_loop = { "while" ~ expression ~ block }
+if_statement = { "if" ~ "(" ~ expression ~ ")" ~ block }
 
-// Statements.
-stmt = { action_def_stmt | action_call_stmt | loop_stmt }
+expression_stmt = { expression ~ EOL }
 
-// Action statements.
-action_def_stmt = { ACTION ~ ACTION_NAME ~ LBRACE ~ action_def_body ~ RBRACE }
-action_def_body = { (notes_block | outcomes_block)+ }
+expression = { conditional }
 
-// Notes.
-notes_block = { NOTES ~ LBRACE ~ note* ~ RBRACE }
-note = { (PREFER | AVOID) ~ OUTCOME_NAME }
+conditional = { logical_or ~ ( "?" ~ expression ~ ":" ~ expression )? }
 
-// Outcomes.
-outcomes_block = { OUTCOMES ~ LBRACE ~ (outcome)* ~ RBRACE }
-outcome = { (SUCCESS | FAILURE | RETRY | HANDLER) ~ OUTCOME_NAME }
+logical_or = { logical_and ~ ( "||" ~ logical_and )* }
 
-// Action calls.
-action_call_stmt = { ACTION_NAME }
+logical_and = { equality ~ ( "&&" ~ equality )* }
 
-// Loops.
-loop_stmt = { LOOP ~ LBRACE ~ actions_block ~ (RBRACE ~ UNTIL ~ LBRACE ~ condition)? ~ RBRACE }
-actions_block = { action_call_stmt* }
-condition = { OUTCOME_NAME* }
+equality = { comparison ~ ( ( "==" | "!=" ) ~ comparison )* }
+
+comparison = { additive ~ ( ( "<" | ">" | "<=" | ">=" ) ~ additive )* }
+
+additive = { multiplicative ~ ( ( "+" | "-" ) ~ multiplicative )* }
+
+multiplicative = { unary ~ ( ( "*" | "/" ) ~ unary )* }
+
+unary = { ( "!" | "-" | "*" )* ~ primary }
+
+primary = {
+    function_call |
+    literal |
+    identifier |
+    tuple
+}
+
+tuple = { "(" ~ expression_list ~ ")" }
+array = { "[" ~ expression_list ~ "]" }
+expression_list = { expression ~ ( "," ~ expression )* ~ ( "," )? }
+
+dictionary = { "{" ~ key_value_pair ~ ( "," ~ key_value_pair )* ~ "}" }
+key_value_pair = { expression ~ ":" ~ expression }
+
+function_call = { identifier ~ "(" ~ argument_list? ~ ")" }
+argument_list = { ( argument ~ ( "," ~ argument )* ) ~ ( "," )? }
+argument = { function_kwarg | expression }
+function_kwarg = { identifier ~ "=" ~ expression }
+
+literal = { number | string | boolean | array | tuple | dictionary }
+number = @{
+    "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ unit?
+}
+
+unit = @{
+    // Length units (metric)
+    "mm" | "cm" | "m" | "km" |
+    // Length units (imperial)
+    "in" | "ft" | "yd" | "mi" |
+    // Time units
+    "ms" | "s" | "min" | "hr" | "day" |
+    // Angle units
+    "deg" | "rad"
+}
+
+string = @{
+    ( "\"" | "“" ) ~
+    ( "\\" ~ ANY | !("\"" | "”") ~ ANY )* ~
+    ( "\"" | "”" )
+}
+boolean = { "true" | "false" }
+
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }

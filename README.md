@@ -16,3 +16,11 @@
 # klang
 
 `klang` is a domain-specific language (DSL) for programming robots. It is used to program robots running the K-Scale operating system.
+
+## Running the Parser
+
+To run the parser on the example file, use the following command:
+
+```bash
+cargo run -- examples/clean_up_cans.k
+```
