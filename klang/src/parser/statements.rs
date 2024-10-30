@@ -1,7 +1,7 @@
 use super::ast::*;
 use super::errors::ParseError;
 use super::expressions::parse_expression;
-use super::parser::Rule;
+use super::structs::Rule;
 use pest::iterators::Pair;
 
 pub fn parse_block(pair: Pair<Rule>) -> Result<Block, ParseError> {

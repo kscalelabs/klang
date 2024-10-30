@@ -8,15 +8,15 @@ pub mod errors;
 pub mod expressions;
 pub mod functions;
 pub mod literals;
-pub mod parser;
 pub mod statements;
+pub mod structs;
 
 use errors::ParseError;
 use functions::parse_function_def;
-use parser::{PestParser, Rule};
 use pest::Parser;
 use std::fs;
 use std::path::Path;
+use structs::{PestParser, Rule};
 
 pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<Program, ParseError> {
     let mut functions = Vec::new();
@@ -57,4 +57,25 @@ pub fn parse_file(file_path: &Path) -> Result<Program, ParseError> {
     })?;
 
     parse_string(&unparsed_file)
+}
+
+pub fn write_program_to_file(program: &Program, file_path: &Path) -> Result<(), ParseError> {
+    let mut buf = Vec::new();
+    prost::Message::encode(program, &mut buf).map_err(|e| {
+        ParseError::new(format!(
+            "Error encoding program to file '{}': {}",
+            file_path.display(),
+            e
+        ))
+    })?;
+
+    fs::write(file_path, &buf).map_err(|e| {
+        ParseError::new(format!(
+            "Error writing program to file '{}': {}",
+            file_path.display(),
+            e
+        ))
+    })?;
+
+    Ok(())
 }

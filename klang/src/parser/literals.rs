@@ -1,6 +1,6 @@
 use super::ast::*;
 use super::errors::ParseError;
-use super::parser::Rule;
+use super::structs::Rule;
 
 pub(crate) fn parse_literal(pair: pest::iterators::Pair<Rule>) -> Result<Expression, ParseError> {
     let inner_pair = pair.into_inner().next().unwrap();
@@ -16,7 +16,7 @@ pub(crate) fn parse_literal(pair: pest::iterators::Pair<Rule>) -> Result<Express
         Rule::number => {
             let s = inner_pair.as_str();
             let (value_str, unit) = s.trim().split_at(
-                s.find(|c: char| !c.is_digit(10) && c != '.' && c != '-')
+                s.find(|c: char| !c.is_ascii_digit() && c != '.' && c != '-')
                     .unwrap_or(s.len()),
             );
             let value: f64 = value_str.parse().unwrap();

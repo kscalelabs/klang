@@ -1,22 +1,27 @@
-use klang::read_and_parse_file;
+use klang::{compile_file, compile_file_inplace};
 use std::env;
 use std::path::Path; // Import from the library
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        eprintln!("Usage: {} <file_path>", args[0]);
-        std::process::exit(1);
-    }
-    let file_path = &args[1];
-
-    let parsed_file = match read_and_parse_file(Path::new(file_path)) {
-        Ok(parsed) => parsed,
-        Err(e) => {
-            eprintln!("{}", e);
+    match args.len() {
+        2 => match compile_file_inplace(Path::new(&args[1])) {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        },
+        3 => match compile_file(Path::new(&args[1]), Path::new(&args[2])) {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        },
+        _ => {
+            eprintln!("Usage: {} <file_path> [output_path]", args[0]);
             std::process::exit(1);
         }
-    };
-
-    println!("{}", parsed_file);
+    }
 }

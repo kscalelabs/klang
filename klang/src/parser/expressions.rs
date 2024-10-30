@@ -1,7 +1,7 @@
 use super::ast::*;
 use super::errors::ParseError;
 use super::literals::{parse_identifier, parse_literal};
-use super::parser::Rule;
+use super::structs::Rule;
 
 pub(crate) fn parse_expression(
     pair: pest::iterators::Pair<Rule>,

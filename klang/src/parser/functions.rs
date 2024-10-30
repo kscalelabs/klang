@@ -1,6 +1,6 @@
 use super::ast::*;
 use super::errors::ParseError;
-use super::parser::Rule;
+use super::structs::Rule;
 use super::statements::parse_block;
 use pest::iterators::Pair;
 
