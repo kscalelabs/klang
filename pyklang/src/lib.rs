@@ -5,8 +5,7 @@ use pyo3_stub_gen::derive::*;
 #[pyfunction]
 #[gen_stub_pyfunction]
 fn get_version() -> String {
-    const VERSION: &str = env!("CARGO_PKG_VERSION");
-    VERSION.to_string()
+    env!("CARGO_PKG_VERSION").to_string()
 }
 
 #[pymodule]
