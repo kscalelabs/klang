@@ -49,7 +49,7 @@ setup(
     url="https://github.com/kscalelabs/klang",
     rust_extensions=[
         RustExtension(
-            target="pyklang",
+            target="pyklang.bindings",
             path="pyklang/Cargo.toml",
             binding=Binding.PyO3,
         ),

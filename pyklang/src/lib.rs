@@ -9,7 +9,7 @@ fn add(a: u64, b: u64) -> u64 {
 }
 
 #[pymodule]
-fn pyklang(m: &Bound<PyModule>) -> PyResult<()> {
+fn bindings(m: &Bound<PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(add, m)?)?;
     Ok(())
 }
