@@ -15,7 +15,7 @@ pub(crate) fn parse_function_def(function_def: Pair<Rule>) -> Result<FunctionDef
             Rule::identifier => name = part.as_str().to_string(),
             Rule::parameter_list => parameters = parse_parameters(part)?,
             Rule::doc_string => doc_string = parse_doc_string(part)?,
-            Rule::block => body = Some(parse_block(part)),
+            Rule::block => body = Some(parse_block(part)?),
             _ => {
                 return Err(ParseError::from_pair(
                     format!("Unknown rule: {:?}", part.as_rule()),

@@ -1,16 +1,17 @@
 use super::ast::*;
+use super::errors::ParseError;
 use super::parser::Rule;
 
-pub(crate) fn parse_literal(pair: pest::iterators::Pair<Rule>) -> Expression {
+pub(crate) fn parse_literal(pair: pest::iterators::Pair<Rule>) -> Result<Expression, ParseError> {
     let inner_pair = pair.into_inner().next().unwrap();
     match inner_pair.as_rule() {
         Rule::string => {
             let value = inner_pair.as_str()[1..inner_pair.as_str().len() - 1].to_string();
-            Expression {
+            Ok(Expression {
                 expr: Some(expression::Expr::Literal(LiteralExpr {
                     value: Some(literal_expr::Value::StringLiteral(StringLiteral { value })),
                 })),
-            }
+            })
         }
         Rule::number => {
             let s = inner_pair.as_str();
@@ -27,23 +28,26 @@ pub(crate) fn parse_literal(pair: pest::iterators::Pair<Rule>) -> Expression {
                 convert_to_standard_units(value, unit)
             };
 
-            Expression {
+            Ok(Expression {
                 expr: Some(expression::Expr::Literal(LiteralExpr {
                     value: Some(literal_expr::Value::NumberLiteral(NumberLiteral { value })),
                 })),
-            }
+            })
         }
         Rule::boolean => {
             let value = inner_pair.as_str() == "true";
-            Expression {
+            Ok(Expression {
                 expr: Some(expression::Expr::Literal(LiteralExpr {
                     value: Some(literal_expr::Value::BooleanLiteral(BooleanLiteral {
                         value,
                     })),
                 })),
-            }
+            })
         }
-        _ => panic!("Unknown literal type: {:?}", inner_pair),
+        _ => Err(ParseError::from_pair(
+            format!("Unknown literal type: {:?}", inner_pair),
+            inner_pair,
+        )),
     }
 }
 
@@ -71,10 +75,12 @@ fn convert_to_standard_units(value: f64, unit: &str) -> f64 {
     }
 }
 
-pub(crate) fn parse_identifier(pair: pest::iterators::Pair<Rule>) -> Expression {
-    Expression {
+pub(crate) fn parse_identifier(
+    pair: pest::iterators::Pair<Rule>,
+) -> Result<Expression, ParseError> {
+    Ok(Expression {
         expr: Some(expression::Expr::Identifier(Identifier {
             name: pair.as_str().to_string(),
         })),
-    }
+    })
 }
