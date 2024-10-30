@@ -1,11 +1,7 @@
-use pest::Parser;
-use pest_derive::Parser;
 use std::fs;
 use std::path::Path;
 
-#[derive(Parser)]
-#[grammar = "klang.pest"] // relative path to your Pest grammar file
-struct KlangParser;
+mod parser;
 
 pub fn read_and_parse_file(file_path: &Path) -> Result<String, String> {
     // Read the file contents
@@ -20,9 +16,9 @@ pub fn read_and_parse_file(file_path: &Path) -> Result<String, String> {
         }
     };
 
-    // Parse the file contents using the KlangParser
-    let parsed_file = match KlangParser::parse(Rule::program, &unparsed_file) {
-        Ok(parsed) => format!("{:#?}", parsed),
+    // Parse the file contents using our new parser
+    let ast = match PestParser::parse(&unparsed_file) {
+        Ok(ast) => ast,
         Err(e) => {
             return Err(format!(
                 "Error parsing file '{}': {}",
@@ -32,5 +28,7 @@ pub fn read_and_parse_file(file_path: &Path) -> Result<String, String> {
         }
     };
 
-    Ok(parsed_file)
+    let program = parse_program(ast.next().unwrap());
+
+    Ok(format!("{:#?}", program))
 }

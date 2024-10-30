@@ -1,0 +1,104 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{
+    "//" ~ (!("\n" | "\r") ~ ANY)* ~ ("\r"? ~ "\n" | EOI) |
+    "/*" ~ (!"*/" ~ ANY)* ~ "*/"
+}
+
+EOL = @{ ";" }
+
+// Identifiers
+// -----------
+
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Types
+// -----
+
+type = @{ "string" | "number" | "boolean" }
+
+// Literals
+// --------
+
+literal = { string | number | boolean }
+
+string_char = { "\\" ~ ANY | !("\"") ~ ANY }
+
+string = @{ "\"" ~ string_char* ~ "\"" }
+
+number = @{
+    "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ unit?
+}
+
+unit = @{
+    "mm" | "cm" | "m" | "km" |
+    "in" | "ft" | "yd" | "mi" |
+    "ms" | "s" | "min" | "hr" |
+    "deg" | "rad"
+}
+
+boolean = @{ "true" | "false" }
+
+// Statements
+// ----------
+
+block = { "{" ~ statement* ~ "}" }
+
+statement = {
+    assignment_stmt |
+    expression_stmt |
+    loop_stmt |
+    break_stmt |
+    return_stmt |
+    empty_stmt
+}
+
+empty_stmt = { EOL }
+
+// Assignments
+// -----------
+
+assignment_stmt = { "let" ~ identifier ~ assign_op ~ expression ~ EOL }
+assign_op = { "=" | "+=" | "-=" | "*=" | "/=" }
+
+// Control Flow
+// ------------
+
+loop_stmt = { "loop" ~ block ~ EOL }
+break_stmt = { "break" ~ EOL }
+return_stmt = { "return" ~ expression ~ EOL }
+
+// Expressions
+// -----------
+
+expression_stmt = { expression ~ EOL }
+expression = { conditional }
+conditional = { logical_or ~ ( "?" ~ expression ~ ":" ~ expression )? }
+logical_or = { logical_and ~ ( "||" ~ logical_and )* }
+logical_and = { equality ~ ( "&&" ~ equality )* }
+equality = { comparison ~ ( ( "==" | "!=" ) ~ comparison )* }
+comparison = { additive ~ ( ( "<" | ">" | "<=" | ">=" ) ~ additive )* }
+additive = { multiplicative ~ ( ( "+" | "-" ) ~ multiplicative )* }
+multiplicative = { unary ~ ( ( "*" | "/" ) ~ unary )* }
+unary = { ( "!" | "-" )* ~ postfix }
+postfix = { primary ~ ( argument_list )* }
+primary = { "(" ~ expression ~ ")" | identifier | literal }
+
+// Function calls
+// --------------
+
+argument_list = { "(" ~ (argument ~ ("," ~ argument)*)? ~ ")" }
+argument = { identifier ~ ":" ~ expression }
+
+// Functions
+// ---------
+
+function_def = {
+    "fn" ~ identifier ~ "(" ~ (parameter_value ~ ("," ~ parameter_value)*)? ~ ")" ~ doc_string? ~ block
+}
+doc_string = { ":" ~ string }
+parameter_value = { identifier ~ ":" ~ type }
+
+// Program
+// -------
+
+program = { SOI ~ function_def* ~ EOI }

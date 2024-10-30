@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package ast;
+
+message Program {
+  repeated FunctionDef functions = 1;
+}
+
+message FunctionDef {
+  string name = 1;
+  repeated Parameter parameters = 2;
+  string doc_string = 3;
+  Block body = 4;
+}
+
+message Parameter {
+  string name = 1;
+  Type type = 2;
+}
+
+message Type {
+  string name = 1; // "string", "number", "boolean"
+}
+
+message Block {
+  repeated Statement statements = 1;
+}
+
+message Statement {
+  oneof stmt {
+    AssignmentStmt assignment = 1;
+    ExpressionStmt expression_stmt = 2;
+    LoopStmt loop = 3;
+    BreakStmt break_stmt = 4;
+    ReturnStmt return_stmt = 5;
+    EmptyStmt empty_stmt = 6;
+  }
+}
+
+message AssignmentStmt {
+  string identifier = 1;
+  string operator = 2; // "=", "+=", "-=", "*=", "/="
+  Expression expression = 3;
+}
+
+message ExpressionStmt {
+  Expression expression = 1;
+}
+
+message LoopStmt {
+  Block body = 1;
+}
+
+message BreakStmt {
+}
+
+message ReturnStmt {
+  Expression expression = 1;
+}
+
+message EmptyStmt {
+}
+
+message Expression {
+  oneof expr {
+    ConditionalExpr conditional = 1;
+    BinaryExpr binary = 2;
+    UnaryExpr unary = 3;
+    FunctionCallExpr function_call = 4;
+    LiteralExpr literal = 5;
+    Identifier identifier = 6;
+    GroupingExpr grouping = 7;
+  }
+}
+
+message ConditionalExpr {
+  Expression condition = 1;
+  Expression then_expr = 2;
+  Expression else_expr = 3;
+}
+
+message BinaryExpr {
+  Expression left = 1;
+  string operator = 2; // "+", "-", "*", "/", "==", "!=", "<", ">", "<=", ">=", "&&", "||"
+  Expression right = 3;
+}
+
+message UnaryExpr {
+  string operator = 1; // "!", "-"
+  Expression operand = 2;
+}
+
+message FunctionCallExpr {
+  Expression function = 1;
+  repeated Argument arguments = 2;
+}
+
+message LiteralExpr {
+  oneof value {
+    StringLiteral string_literal = 1;
+    NumberLiteral number_literal = 2;
+    BooleanLiteral boolean_literal = 3;
+  }
+}
+
+message StringLiteral {
+  string value = 1;
+}
+
+message NumberLiteral {
+  double value = 1;
+  string unit = 2; // Optional unit like "mm", "cm", etc.
+}
+
+message BooleanLiteral {
+  bool value = 1;
+}
+
+message Identifier {
+  string name = 1;
+}
+
+message GroupingExpr {
+  Expression expression = 1;
+}
+
+message Argument {
+  string name = 1;
+  Expression value = 2;
+}

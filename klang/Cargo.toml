@@ -4,13 +4,20 @@ name = "klang"
 version = "0.1.0"
 authors = ["K-Scale Labs"]
 edition = "2021"
+build = "build.rs"
 
 [dependencies]
 
-pest = "2.5"
-pest_derive = "2.5"
+pest = "^2.5"
+pest_derive = "^2.5"
 thiserror = "1.0"
-lazy_static = "1.4.0"
+lazy_static = "^1.4.0"
+prost = "0.13"
+prost-types = "0.13"
+
+[build-dependencies]
+
+prost-build = "^0.13.3"
 
 [[bin]]
 
