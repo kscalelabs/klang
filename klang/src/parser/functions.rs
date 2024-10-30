@@ -2,7 +2,7 @@ use super::ast::*;
 use super::parser::Rule;
 use pest::iterators::Pair;
 
-pub fn parse_function_def(function_def: Pair<Rule>) -> FunctionDef {
+pub(crate) fn parse_function_def(function_def: Pair<Rule>) -> FunctionDef {
     let mut name = String::new();
     let mut parameters = Vec::new();
     let mut doc_string = String::new();
@@ -26,7 +26,7 @@ pub fn parse_function_def(function_def: Pair<Rule>) -> FunctionDef {
     }
 }
 
-pub fn parse_parameters(parameters: Pair<Rule>) -> Vec<Parameter> {
+fn parse_parameters(parameters: Pair<Rule>) -> Vec<Parameter> {
     let mut result = Vec::new();
 
     for part in parameters.into_inner() {
@@ -41,7 +41,7 @@ pub fn parse_parameters(parameters: Pair<Rule>) -> Vec<Parameter> {
     result
 }
 
-pub fn parse_parameter_value(parameter_value: Pair<Rule>) -> Parameter {
+fn parse_parameter_value(parameter_value: Pair<Rule>) -> Parameter {
     let mut identifier = String::new();
     let mut param_type = String::new();
 
@@ -59,12 +59,12 @@ pub fn parse_parameter_value(parameter_value: Pair<Rule>) -> Parameter {
     }
 }
 
-pub fn parse_doc_string(pair: Pair<Rule>) -> String {
+fn parse_doc_string(pair: Pair<Rule>) -> String {
     let inner = pair.into_inner().next().unwrap();
     inner.as_str()[1..inner.as_str().len() - 1].to_string()
 }
 
-pub fn parse_block(pair: Pair<Rule>) -> Block {
+fn parse_block(pair: Pair<Rule>) -> Block {
     let statements = pair
         .into_inner()
         .filter_map(|p| {
@@ -79,7 +79,7 @@ pub fn parse_block(pair: Pair<Rule>) -> Block {
     Block { statements }
 }
 
-pub fn parse_statement(pair: Pair<Rule>) -> Statement {
+fn parse_statement(pair: Pair<Rule>) -> Statement {
     let inner = pair.into_inner().next().unwrap();
     match inner.as_rule() {
         Rule::assignment_stmt => parse_assignment_statement(inner),

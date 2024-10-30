@@ -1,9 +1,8 @@
 use super::ast::*;
 use super::literals::parse_literal;
 use super::parser::Rule;
-use pest::iterators::Pair;
 
-pub fn parse_expression(pair: pest::iterators::Pair<Rule>) -> Expression {
+pub(crate) fn parse_expression(pair: pest::iterators::Pair<Rule>) -> Expression {
     match pair.as_rule() {
         Rule::expression => parse_expression(pair.into_inner().next().unwrap()),
         Rule::conditional => parse_conditional(pair),

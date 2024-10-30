@@ -10,11 +10,8 @@ pub mod literals;
 pub mod parser;
 pub mod statements;
 
-use expressions::*;
-use functions::*;
-use literals::*;
-use parser::*;
-use statements::*;
+use functions::parse_function_def;
+use parser::Rule;
 
 pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Program {
     let mut functions = Vec::new();

@@ -1,6 +1,5 @@
 use super::ast::*;
 use super::parser::Rule;
-use pest::iterators::Pair;
 
 pub(crate) fn parse_literal(pair: pest::iterators::Pair<Rule>) -> Expression {
     let inner_pair = pair.into_inner().next().unwrap();

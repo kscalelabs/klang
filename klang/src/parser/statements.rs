@@ -57,7 +57,7 @@ pub fn parse_block(block: Pair<Rule>) -> Block {
     Block { statements }
 }
 
-pub fn parse_assignment_stmt(assignment_stmt: Pair<Rule>) -> AssignmentStmt {
+fn parse_assignment_stmt(assignment_stmt: Pair<Rule>) -> AssignmentStmt {
     let mut identifier = String::new();
     let mut operator = String::new();
     let mut expression = None;
@@ -80,7 +80,7 @@ pub fn parse_assignment_stmt(assignment_stmt: Pair<Rule>) -> AssignmentStmt {
     }
 }
 
-pub fn parse_loop_stmt(loop_stmt: Pair<Rule>) -> LoopStmt {
+fn parse_loop_stmt(loop_stmt: Pair<Rule>) -> LoopStmt {
     let mut body = None;
 
     for part in loop_stmt.into_inner() {
@@ -95,7 +95,7 @@ pub fn parse_loop_stmt(loop_stmt: Pair<Rule>) -> LoopStmt {
     LoopStmt { body }
 }
 
-pub fn parse_return_stmt(return_stmt: Pair<Rule>) -> ReturnStmt {
+fn parse_return_stmt(return_stmt: Pair<Rule>) -> ReturnStmt {
     let mut expression = None;
 
     for part in return_stmt.into_inner() {
