@@ -23,12 +23,16 @@ pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<Program, Parse
 
     for function_pair in pair.into_inner() {
         match function_pair.as_rule() {
-            Rule::function_def => functions.push(parse_function_def(function_pair)),
+            Rule::function_def => match parse_function_def(function_pair) {
+                Ok(function) => functions.push(function),
+                Err(e) => return Err(e),
+            },
             Rule::EOI => break,
             _ => {
-                return Err(ParseError {
-                    message: format!("Unknown rule: {:?}", function_pair.as_rule()),
-                })
+                return Err(ParseError::from_pair(
+                    format!("Unknown rule: {:?}", function_pair.as_rule()),
+                    function_pair,
+                ));
             }
         }
     }
@@ -39,15 +43,17 @@ pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<Program, Parse
 pub fn parse_string(input: &str) -> Result<Program, ParseError> {
     match PestParser::parse(Rule::program, input) {
         Ok(mut pairs) => parse_program(pairs.next().unwrap()),
-        Err(e) => Err(ParseError {
-            message: format!("Error parsing input: {}", e),
-        }),
+        Err(e) => Err(ParseError::new(format!("Error parsing input: {}", e))),
     }
 }
 
 pub fn parse_file(file_path: &Path) -> Result<Program, ParseError> {
-    let unparsed_file = fs::read_to_string(file_path).map_err(|e| ParseError {
-        message: format!("Error reading file '{}': {}", file_path.display(), e),
+    let unparsed_file = fs::read_to_string(file_path).map_err(|e| {
+        ParseError::new(format!(
+            "Error reading file '{}': {}",
+            file_path.display(),
+            e
+        ))
     })?;
 
     parse_string(&unparsed_file)
