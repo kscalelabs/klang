@@ -2,6 +2,6 @@
 # ruff: noqa: E501, F401
 
 
-def add(a:int,b:int) -> int:
+def get_version() -> str:
     ...
 

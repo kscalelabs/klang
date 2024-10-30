@@ -4,13 +4,14 @@ use pyo3_stub_gen::derive::*;
 
 #[pyfunction]
 #[gen_stub_pyfunction]
-fn add(a: u64, b: u64) -> u64 {
-    a + b
+fn get_version() -> String {
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    VERSION.to_string()
 }
 
 #[pymodule]
 fn bindings(m: &Bound<PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(add, m)?)?;
+    m.add_function(wrap_pyfunction!(get_version, m)?)?;
     Ok(())
 }
 

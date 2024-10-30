@@ -1,5 +1,6 @@
 """Defines the top-level package for PyKlang."""
 
-__version__ = "0.0.1"
+from .bindings import get_version
 
-from .bindings import add
+# Use the version from the Rust bindings.
+__version__ = get_version()
