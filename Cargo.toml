@@ -1,4 +1,14 @@
 [workspace]
 
-members = ["klang"]
+members = ["klang", "pyklang"]
 resolver = "2"
+
+[workspace.package]
+
+version = "0.1.0"
+edition = "2021"
+description = "The Klang programming language"
+authors = ["K-Scale Labs"]
+repository = "https://github.com/kscalelabs/klang"
+license = "MIT"
+readme = "README.md"

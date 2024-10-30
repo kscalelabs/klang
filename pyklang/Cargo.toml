@@ -1,0 +1,24 @@
+[package]
+
+name = "pyklang"
+
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+readme.workspace = true
+
+[lib]
+
+name = "pyklang"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+pyo3 = { version = ">= 0.21.0", features = ["extension-module"] }
+pyo3-stub-gen = ">= 0.6.0"
+
+# Other packages in the workspace.
+klang = { path = "../klang" }
