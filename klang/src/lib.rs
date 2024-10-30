@@ -1,6 +1,7 @@
-mod parser;
+pub mod parser;
 
-use crate::parser::{parse_program, PestParser, Rule};
+use crate::parser::parse_program;
+use crate::parser::parser::{PestParser, Rule};
 use pest::Parser;
 use std::fs;
 use std::path::Path;

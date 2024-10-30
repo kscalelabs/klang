@@ -4,17 +4,12 @@ COMMENT = _{
     "/*" ~ (!"*/" ~ ANY)* ~ "*/"
 }
 
-EOL = @{ ";" }
+EOL = _{ ";" }
 
 // Identifiers
 // -----------
 
 identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
-
-// Types
-// -----
-
-type = @{ "string" | "number" | "boolean" }
 
 // Literals
 // --------
@@ -98,7 +93,8 @@ function_def = {
 }
 parameter_list = { parameter_value ~ ("," ~ parameter_value)* }
 doc_string = { ":" ~ string }
-parameter_value = { identifier ~ ":" ~ type }
+parameter_type = @{ "string" | "number" | "boolean" }
+parameter_value = { identifier ~ ":" ~ parameter_type }
 
 // Program
 // -------

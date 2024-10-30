@@ -29,11 +29,10 @@ message Block {
 message Statement {
   oneof stmt {
     AssignmentStmt assignment = 1;
-    ExpressionStmt expression_stmt = 2;
+    ExpressionStmt expression = 2;
     LoopStmt loop = 3;
-    BreakStmt break_stmt = 4;
-    ReturnStmt return_stmt = 5;
-    EmptyStmt empty_stmt = 6;
+    BreakStmt break = 4;
+    ReturnStmt return = 5;
   }
 }
 
