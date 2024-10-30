@@ -58,9 +58,6 @@ message ReturnStmt {
   Expression expression = 1;
 }
 
-message EmptyStmt {
-}
-
 message Expression {
   oneof expr {
     ConditionalExpr conditional = 1;
