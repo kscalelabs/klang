@@ -1,6 +1,4 @@
-use pest::Parser;
 use pest_derive::Parser;
-use std::fs;
 
 mod ast {
     include!(concat!(env!("OUT_DIR"), "/proto/ast.rs"));
@@ -10,9 +8,9 @@ use ast::*;
 
 #[derive(Parser)]
 #[grammar = "pest/klang.pest"]
-struct PestParser;
+pub struct PestParser;
 
-fn parse_program(pair: pest::iterators::Pair<Rule>) -> Program {
+pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Program {
     let mut functions = Vec::new();
 
     for function_pair in pair.into_inner() {
@@ -38,26 +36,38 @@ fn parse_function_def(pair: pest::iterators::Pair<Rule>) -> FunctionDef {
     }
 
     if let Some(param_list_pair) = pairs.next() {
-        if param_list_pair.as_rule() == Rule::parameter_list {
-            parameters = parse_parameters(param_list_pair);
+        match param_list_pair.as_rule() {
+            Rule::parameter_list => {
+                parameters = parse_parameters(param_list_pair);
+                if let Some(next_pair) = pairs.next() {
+                    match next_pair.as_rule() {
+                        Rule::doc_string => {
+                            doc_string = parse_doc_string(next_pair);
+                            body = Some(parse_block(pairs.next().unwrap()));
+                        }
+                        Rule::block => {
+                            body = Some(parse_block(next_pair));
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Rule::doc_string => {
+                doc_string = parse_doc_string(param_list_pair);
+                body = Some(parse_block(pairs.next().unwrap()));
+            }
+            Rule::block => {
+                body = Some(parse_block(param_list_pair));
+            }
+            _ => {}
         }
-    }
-
-    if let Some(doc_pair) = pairs.peek() {
-        if doc_pair.as_rule() == Rule::doc_string {
-            doc_string = parse_doc_string(pairs.next().unwrap());
-        }
-    }
-
-    if let Some(block_pair) = pairs.next() {
-        body = Some(parse_block(block_pair));
     }
 
     FunctionDef {
         name,
         parameters,
         doc_string,
-        body: body.unwrap(),
+        body,
     }
 }
 
@@ -72,7 +82,7 @@ fn parse_parameters(pair: pest::iterators::Pair<Rule>) -> Vec<Parameter> {
             let type_name = inner_pairs.next().unwrap().as_str().to_string();
             params.push(Parameter {
                 name,
-                type_: Some(Type { name: type_name }),
+                r#type: Some(Type { name: type_name }),
             });
         }
     }
@@ -87,7 +97,7 @@ fn parse_doc_string(pair: pest::iterators::Pair<Rule>) -> String {
 fn parse_block(pair: pest::iterators::Pair<Rule>) -> Block {
     let mut statements = Vec::new();
 
-    for stmt_pair in pair.into_inner() {
+    for stmt_pair in pair.clone().into_inner() {
         if let Some(stmt) = parse_statement(stmt_pair) {
             statements.push(stmt);
         }
@@ -183,11 +193,11 @@ fn parse_conditional_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
             let else_expr = parse_expression(inner.next().unwrap());
 
             Expression {
-                expr: Some(expression::Expr::ConditionalExpr(ConditionalExpr {
-                    condition: Some(condition),
-                    then_expr: Some(then_expr),
-                    else_expr: Some(else_expr),
-                })),
+                expr: Some(expression::Expr::Conditional(Box::new(ConditionalExpr {
+                    condition: Some(Box::new(condition)),
+                    then_expr: Some(Box::new(then_expr)),
+                    else_expr: Some(Box::new(else_expr)),
+                }))),
             }
         } else {
             condition
@@ -206,11 +216,11 @@ fn parse_logical_or_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
         let right_expr = parse_expression(inner.next().unwrap());
 
         expr = Expression {
-            expr: Some(expression::Expr::BinaryExpr(BinaryExpr {
-                left: Some(expr),
+            expr: Some(expression::Expr::Binary(Box::new(BinaryExpr {
+                left: Some(Box::new(expr)),
                 operator,
-                right: Some(right_expr),
-            })),
+                right: Some(Box::new(right_expr)),
+            }))),
         };
     }
 
@@ -226,11 +236,11 @@ fn parse_logical_and_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
         let right_expr = parse_expression(inner.next().unwrap());
 
         expr = Expression {
-            expr: Some(expression::Expr::BinaryExpr(BinaryExpr {
-                left: Some(expr),
+            expr: Some(expression::Expr::Binary(Box::new(BinaryExpr {
+                left: Some(Box::new(expr)),
                 operator,
-                right: Some(right_expr),
-            })),
+                right: Some(Box::new(right_expr)),
+            }))),
         };
     }
 
@@ -247,11 +257,11 @@ fn parse_binary_expr(pair: pest::iterators::Pair<Rule>, operators: Vec<&str>) ->
             let right_expr = parse_expression(inner.next().unwrap());
 
             expr = Expression {
-                expr: Some(expression::Expr::BinaryExpr(BinaryExpr {
-                    left: Some(expr),
+                expr: Some(expression::Expr::Binary(Box::new(BinaryExpr {
+                    left: Some(Box::new(expr)),
                     operator,
-                    right: Some(right_expr),
-                })),
+                    right: Some(Box::new(right_expr)),
+                }))),
             };
         } else {
             break;
@@ -278,10 +288,10 @@ fn parse_unary_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
 
     for operator in operators.into_iter().rev() {
         expr = Expression {
-            expr: Some(expression::Expr::UnaryExpr(UnaryExpr {
+            expr: Some(expression::Expr::Unary(Box::new(UnaryExpr {
                 operator,
-                operand: Some(expr),
-            })),
+                operand: Some(Box::new(expr)),
+            }))),
         };
     }
 
@@ -294,10 +304,10 @@ fn parse_postfix_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
 
     while let Some(arg_list_pair) = inner.next() {
         expr = Expression {
-            expr: Some(expression::Expr::FunctionCallExpr(FunctionCallExpr {
-                function: Some(expr),
+            expr: Some(expression::Expr::FunctionCall(Box::new(FunctionCallExpr {
+                function: Some(Box::new(expr)),
                 arguments: parse_argument_list(arg_list_pair),
-            })),
+            }))),
         };
     }
 
@@ -324,7 +334,7 @@ fn parse_literal_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
         Rule::string => {
             let value = inner_pair.as_str().to_string();
             Expression {
-                expr: Some(expression::Expr::LiteralExpr(LiteralExpr {
+                expr: Some(expression::Expr::Literal(LiteralExpr {
                     value: Some(literal_expr::Value::StringLiteral(StringLiteral { value })),
                 })),
             }
@@ -332,7 +342,7 @@ fn parse_literal_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
         Rule::number => {
             let value = inner_pair.as_str().parse::<f64>().unwrap();
             Expression {
-                expr: Some(expression::Expr::LiteralExpr(LiteralExpr {
+                expr: Some(expression::Expr::Literal(LiteralExpr {
                     value: Some(literal_expr::Value::NumberLiteral(NumberLiteral {
                         value,
                         unit: "".to_string(),
@@ -343,7 +353,7 @@ fn parse_literal_expr(pair: pest::iterators::Pair<Rule>) -> Expression {
         Rule::boolean => {
             let value = inner_pair.as_str() == "true";
             Expression {
-                expr: Some(expression::Expr::LiteralExpr(LiteralExpr {
+                expr: Some(expression::Expr::Literal(LiteralExpr {
                     value: Some(literal_expr::Value::BooleanLiteral(BooleanLiteral {
                         value,
                     })),

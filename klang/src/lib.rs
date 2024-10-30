@@ -1,7 +1,9 @@
+mod parser;
+
+use crate::parser::{parse_program, PestParser, Rule};
+use pest::Parser;
 use std::fs;
 use std::path::Path;
-
-mod parser;
 
 pub fn read_and_parse_file(file_path: &Path) -> Result<String, String> {
     // Read the file contents
@@ -17,7 +19,7 @@ pub fn read_and_parse_file(file_path: &Path) -> Result<String, String> {
     };
 
     // Parse the file contents using our new parser
-    let ast = match PestParser::parse(&unparsed_file) {
+    let mut ast = match PestParser::parse(Rule::program, &unparsed_file) {
         Ok(ast) => ast,
         Err(e) => {
             return Err(format!(

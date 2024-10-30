@@ -79,7 +79,8 @@ equality = { comparison ~ ( ( "==" | "!=" ) ~ comparison )* }
 comparison = { additive ~ ( ( "<" | ">" | "<=" | ">=" ) ~ additive )* }
 additive = { multiplicative ~ ( ( "+" | "-" ) ~ multiplicative )* }
 multiplicative = { unary ~ ( ( "*" | "/" ) ~ unary )* }
-unary = { ( "!" | "-" )* ~ postfix }
+unary = { unary_operator* ~ postfix }
+unary_operator = { "!" | "-" }
 postfix = { primary ~ ( argument_list )* }
 primary = { "(" ~ expression ~ ")" | identifier | literal }
 
@@ -93,8 +94,9 @@ argument = { identifier ~ ":" ~ expression }
 // ---------
 
 function_def = {
-    "fn" ~ identifier ~ "(" ~ (parameter_value ~ ("," ~ parameter_value)*)? ~ ")" ~ doc_string? ~ block
+    "fn" ~ identifier ~ "(" ~ parameter_list? ~ ")" ~ doc_string? ~ block
 }
+parameter_list = { parameter_value ~ ("," ~ parameter_value)* }
 doc_string = { ":" ~ string }
 parameter_value = { identifier ~ ":" ~ type }
 
