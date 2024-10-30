@@ -15,11 +15,13 @@ message FunctionDef {
 
 message Parameter {
   string name = 1;
-  Type type = 2;
+  ParameterType type = 2;
 }
 
-message Type {
-  string name = 1; // "string", "number", "boolean"
+enum ParameterType {
+  String = 0;
+  Number = 1;
+  Boolean = 2;
 }
 
 message Block {
@@ -38,8 +40,7 @@ message Statement {
 
 message AssignmentStmt {
   string identifier = 1;
-  string operator = 2; // "=", "+=", "-=", "*=", "/="
-  Expression expression = 3;
+  Expression expression = 2;
 }
 
 message ExpressionStmt {
@@ -80,13 +81,33 @@ message ConditionalExpr {
 
 message BinaryExpr {
   Expression left = 1;
-  string operator = 2; // "+", "-", "*", "/", "==", "!=", "<", ">", "<=", ">=", "&&", "||"
+  BinaryOperator operator = 2;
   Expression right = 3;
 }
 
+enum BinaryOperator {
+  Add = 0;
+  Sub = 1;
+  Mul = 2;
+  Div = 3;
+  Eq = 4;
+  NotEq = 5;
+  Lt = 6;
+  Gt = 7;
+  Lte = 8;
+  Gte = 9;
+  And = 10;
+  Or = 11;
+}
+
 message UnaryExpr {
-  string operator = 1; // "!", "-"
+  UnaryOperator operator = 1;
   Expression operand = 2;
+}
+
+enum UnaryOperator {
+  Not = 0;
+  Neg = 1;
 }
 
 message FunctionCallExpr {
@@ -108,7 +129,6 @@ message StringLiteral {
 
 message NumberLiteral {
   double value = 1;
-  string unit = 2; // Optional unit like "mm", "cm", etc.
 }
 
 message BooleanLiteral {

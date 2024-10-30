@@ -70,14 +70,18 @@ expression = { conditional }
 conditional = { logical_or ~ ( "?" ~ expression ~ ":" ~ expression )? }
 logical_or = { logical_and ~ ( "||" ~ logical_and )* }
 logical_and = { equality ~ ( "&&" ~ equality )* }
-equality = { comparison ~ ( ( "==" | "!=" ) ~ comparison )* }
-comparison = { additive ~ ( ( "<" | ">" | "<=" | ">=" ) ~ additive )* }
-additive = { multiplicative ~ ( ( "+" | "-" ) ~ multiplicative )* }
-multiplicative = { unary ~ ( ( "*" | "/" ) ~ unary )* }
-unary = { unary_operator* ~ postfix }
-unary_operator = { "!" | "-" }
-postfix = { primary ~ ( argument_list )* }
-primary = { "(" ~ expression ~ ")" | identifier | literal }
+equality = { comparison ~ ( equality_op ~ comparison )* }
+equality_op = { "==" | "!=" }
+comparison = { multiplicative ~ ( comparison_op ~ multiplicative )* }
+comparison_op = { "<=" | ">=" | "<" | ">" }
+multiplicative = { additive ~ ( multiplicative_op ~ multiplicative )? }
+multiplicative_op = { "*" | "/" }
+additive = { unary ~ ( additive_op ~ additive )? }
+additive_op = { "+" | "-" }
+unary = { unary_op* ~ postfix }
+unary_op = { "!" | "-" }
+postfix = { primary ~ ( argument_list )? }
+primary = { "(" ~ expression ~ ")" | literal | identifier }
 
 // Function calls
 // --------------

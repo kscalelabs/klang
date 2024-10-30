@@ -19,6 +19,7 @@ pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Program {
     for function_pair in pair.into_inner() {
         match function_pair.as_rule() {
             Rule::function_def => functions.push(parse_function_def(function_pair)),
+            Rule::EOI => break,
             _ => panic!("Unknown rule: {:?}", function_pair.as_rule()),
         }
     }
