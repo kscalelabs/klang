@@ -57,4 +57,5 @@ setup(
     extras_require={"dev": requirements_dev},
     packages=find_packages(include=["pyklang"]),
     cmdclass={"build_ext": RustBuildExt},
+    entry_points={"console_scripts": ["kompile=pyklang.kompile:main"]},
 )

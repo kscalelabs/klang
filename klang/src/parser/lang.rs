@@ -30,10 +30,7 @@ pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<KlangProgram, 
     let ir_program = Program { lines: all_lines };
     let ast_program = ir_to_ast(&ir_program)?;
 
-    Ok(KlangProgram {
-        ast_program,
-        ir_program,
-    })
+    Ok(KlangProgram::from_ast(&ast_program))
 }
 
 fn parse_line(line: Pair<Rule>) -> Result<Vec<Line>, ParseError> {

@@ -26,8 +26,8 @@ prost-build = "^0.13.3"
 
 [[bin]]
 
-name = "kcompile"
-path = "src/bin/kcompile.rs"
+name = "kompile"
+path = "src/bin/kompile.rs"
 
 [[test]]
 name = "integration_test"
