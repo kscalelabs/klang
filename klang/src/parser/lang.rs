@@ -38,7 +38,7 @@ pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<KlangProgram, 
 
 fn parse_line(line: Pair<Rule>) -> Result<Vec<Line>, ParseError> {
     line.into_inner()
-        .map(|line_pair| match line_pair.as_rule() {
+        .filter_map(|line_pair| match line_pair.as_rule() {
             Rule::function_def => match parse_function_def(line_pair) {
                 Ok(func) => Some(Ok(Line {
                     line_kind: Some(LineKind::Function(func)),
@@ -63,7 +63,6 @@ fn parse_line(line: Pair<Rule>) -> Result<Vec<Line>, ParseError> {
                 line_pair,
             ))),
         })
-        .flatten()
         .collect()
 }
 
