@@ -16,6 +16,9 @@ class PyKlangProgram:
     def load_binary(path:str) -> PyKlangProgram:
         ...
 
+    def to_list(self) -> list[list[str]]:
+        ...
+
 
 def get_version() -> str:
     ...

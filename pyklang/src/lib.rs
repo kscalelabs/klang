@@ -66,6 +66,10 @@ impl PyKlangProgram {
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(PyKlangProgram { inner: program })
     }
+
+    fn to_list(&self) -> PyResult<Vec<Vec<String>>> {
+        Ok(self.inner.to_list().clone())
+    }
 }
 
 #[pyclass]

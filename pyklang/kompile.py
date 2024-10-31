@@ -1,28 +1,34 @@
 """Defines the PyKlang CLI."""
 
-import argparse
 from pathlib import Path
+
+import click
 
 from pyklang.bindings import parse_file
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Kompile a Klang program.")
-    parser.add_argument("input", help="The input file to compile.")
-    parser.add_argument("-o", "--output", help="The output file to compile.")
-    parser.add_argument("-t", "--text", action="store_true", help="Output the text representation of the program.")
-    args = parser.parse_args()
+@click.command()
+@click.argument("input_file")
+@click.option("-o", "--output", help="The output file to compile.")
+@click.option("-i", "--inplace", is_flag=True, help="Overwrite the input file.")
+@click.option("-t", "--text", is_flag=True, help="Output the text representation of the program.")
+def main(input_file: str, output: str | None, inplace: bool, text: bool) -> None:
+    """Kompile a Klang program."""
+    program = parse_file(input_file)
 
-    program = parse_file(args.input)
+    if inplace:
+        if output is not None:
+            raise click.UsageError("Cannot specify both -o and -i")
+        output = Path(input_file).with_suffix(".ko").as_posix()
 
-    if args.output is None:
-        print(program)
+    if output is None:
+        click.echo(program)
     else:
-        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-        if args.text:
-            program.save_text(args.output)
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        if text:
+            program.save_text(output)
         else:
-            program.save_binary(args.output)
+            program.save_binary(output)
 
 
 if __name__ == "__main__":

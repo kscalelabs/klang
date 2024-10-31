@@ -44,6 +44,22 @@ impl Node {
         result.push('\n');
         result
     }
+
+    pub fn to_list(&self) -> Vec<Vec<String>> {
+        if self.children.is_empty() {
+            vec![vec![self.text.clone()]]
+        } else {
+            self.children
+                .iter()
+                .flat_map(|child| {
+                    child.to_list().into_iter().map(|mut line| {
+                        line.push(self.text.clone());
+                        line
+                    })
+                })
+                .collect()
+        }
+    }
 }
 
 pub struct KlangProgram {
@@ -92,6 +108,13 @@ impl KlangProgram {
             .map(|node| node.to_string(0))
             .collect::<Vec<String>>()
             .join("\n")
+    }
+
+    pub fn to_list(&self) -> Vec<Vec<String>> {
+        self.program
+            .iter()
+            .flat_map(|node| node.to_list())
+            .collect()
     }
 }
 

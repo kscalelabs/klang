@@ -1,6 +1,6 @@
 [package]
 
-name = "pyklang"
+name = "bindings"
 
 version.workspace = true
 edition.workspace = true
@@ -12,7 +12,7 @@ readme.workspace = true
 
 [lib]
 
-name = "pyklang"
+name = "bindings"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
