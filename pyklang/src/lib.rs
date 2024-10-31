@@ -16,7 +16,7 @@ fn get_version() -> String {
 #[pyfunction]
 #[gen_stub_pyfunction]
 fn parse_file(path: &str) -> PyResult<PyKlangProgram> {
-    let program = klang_parse_file(&Path::new(path))
+    let program = klang_parse_file(Path::new(path))
         .map_err(|e| PyValueError::new_err(PyParseError { inner: e }.to_string()))?;
     Ok(PyKlangProgram { inner: program })
 }
@@ -46,13 +46,13 @@ impl From<KlangProgram> for PyKlangProgram {
 impl PyKlangProgram {
     fn save_binary(&self, path: &str) -> PyResult<()> {
         self.inner
-            .save_binary(&Path::new(path))
+            .save_binary(Path::new(path))
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
     fn save_text(&self, path: &str) -> PyResult<()> {
         self.inner
-            .save_text(&Path::new(path))
+            .save_text(Path::new(path))
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
@@ -62,7 +62,7 @@ impl PyKlangProgram {
 
     #[staticmethod]
     fn load_binary(path: &str) -> PyResult<PyKlangProgram> {
-        let program = KlangProgram::load_binary(&Path::new(path))
+        let program = KlangProgram::load_binary(Path::new(path))
             .map_err(|e| PyValueError::new_err(e.to_string()))?;
         Ok(PyKlangProgram { inner: program })
     }
