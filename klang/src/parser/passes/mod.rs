@@ -13,16 +13,16 @@ fn get_function_signature(name: &TextWithArgs) -> (String, Vec<String>) {
         if first {
             first = false;
         } else {
-            signature.push_str(" ");
+            signature.push(' ');
         }
         match &part.part_kind {
             Some(PartKind::Text(text)) => {
                 signature.push_str(text);
             }
             Some(PartKind::FunctionArg(arg)) => {
-                signature.push_str("[");
+                signature.push('[');
                 signature.push_str(&arg.text);
-                signature.push_str("]");
+                signature.push(']');
                 params.push(arg.text.clone());
             }
             None => {}
@@ -180,7 +180,7 @@ fn substitute_text_with_args(
         if first {
             first = false;
         } else {
-            result.push_str(" ");
+            result.push(' ');
         }
         match &part.part_kind {
             Some(PartKind::Text(text)) => {

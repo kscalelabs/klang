@@ -63,7 +63,7 @@ fn parse_line(line: Pair<Rule>) -> Result<Vec<Line>, ParseError> {
                 line_pair,
             ))),
         })
-        .filter_map(|line| line)
+        .flatten()
         .collect()
 }
 
