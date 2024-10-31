@@ -106,7 +106,12 @@ fn process_line_with_args(
                                     )));
                                 }
                                 call_stack.push(func_sig.clone());
-                                let mut commands = Vec::new();
+
+                                // Create parent command with function name
+                                let function_text = substitute_text_with_args(name, arg_map)?;
+
+                                // Process child commands
+                                let mut children = Vec::new();
                                 for inner_line in &func_def.lines {
                                     let mut cmds = process_line_with_args(
                                         inner_line,
@@ -114,10 +119,16 @@ fn process_line_with_args(
                                         call_stack,
                                         &new_arg_map,
                                     )?;
-                                    commands.append(&mut cmds);
+                                    children.append(&mut cmds);
                                 }
+
                                 call_stack.pop();
-                                return Ok(commands);
+
+                                // Return single command with children
+                                return Ok(vec![AstCommand {
+                                    text: function_text,
+                                    children,
+                                }]);
                             }
                         }
                     }
@@ -152,7 +163,7 @@ fn process_command_with_args(
         let text = substitute_text_with_args(text, arg_map)?;
         Ok(AstCommand {
             text,
-            children: Vec::new(), // Removed children handling since field doesn't exist
+            children: Vec::new(),
         })
     } else {
         Err(ParseError::new("Command without text".to_string()))
@@ -179,7 +190,7 @@ fn substitute_text_with_args(
                 if let Some(value) = arg_map.get(&arg.text) {
                     result.push_str(value);
                 } else {
-                    return Err(ParseError::new(format!("Argument not found: {}", arg.text)));
+                    result.push_str(&arg.text);
                 }
             }
             None => {}

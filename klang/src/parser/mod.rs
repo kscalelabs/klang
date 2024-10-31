@@ -60,8 +60,27 @@ pub fn write_program_to_file(
             ))
         })?;
     } else {
-        let program_str = format!("{:#?}", program.ast_program);
-        fs::write(file_path, &program_str).map_err(|e| {
+        let mut output = String::new();
+
+        fn render_command(cmd: &ast::Command, indent: usize) -> String {
+            let mut result = format!("{:indent$}{}", "", cmd.text, indent = indent);
+            if !cmd.children.is_empty() {
+                result.push_str(" {\n");
+                for child in &cmd.children {
+                    result.push_str(&render_command(child, indent + 2));
+                }
+                result.push_str(&format!("{:indent$}}}\n", "", indent = indent));
+            } else {
+                result.push('\n');
+            }
+            result
+        }
+
+        for command in &program.ast_program.commands {
+            output.push_str(&render_command(command, 0));
+        }
+
+        fs::write(file_path, &output).map_err(|e| {
             ParseError::new(format!(
                 "Error writing program to file '{}': {}",
                 file_path.display(),
