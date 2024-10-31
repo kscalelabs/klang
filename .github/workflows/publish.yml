@@ -42,7 +42,7 @@ jobs:
           pip install maturin build wheel
 
       - name: Build package
-        run: maturin build --release --strip --out dist
+        run: maturin build --release --strip --out dist --manifest-path pyklang/Cargo.toml
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v3
@@ -108,5 +108,5 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          cd actuator/robstride
+          cd klang/
           cargo publish
