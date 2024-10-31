@@ -24,11 +24,7 @@ impl Node {
     pub fn from_ast(ast: &AstCommand) -> Self {
         Node {
             text: ast.text.clone(),
-            children: ast
-                .children
-                .iter()
-                .map(|child| Node::from_ast(child))
-                .collect(),
+            children: ast.children.iter().map(Node::from_ast).collect(),
         }
     }
 
@@ -75,11 +71,7 @@ impl KlangProgram {
 
     pub fn from_ast(ast: &AstProgram) -> Self {
         KlangProgram {
-            program: ast
-                .commands
-                .iter()
-                .map(|command| Node::from_ast(command))
-                .collect(),
+            program: ast.commands.iter().map(Node::from_ast).collect(),
         }
     }
 
