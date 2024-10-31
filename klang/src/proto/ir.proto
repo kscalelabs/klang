@@ -3,7 +3,7 @@ syntax = "proto3";
 package ir;
 
 message Program {
-  repeated Command commands = 1;
+  repeated Line lines = 1;
 }
 
 message Line {
@@ -14,17 +14,30 @@ message Line {
     }
 }
 
+message TextWithArgs {
+  repeated TextPart parts = 1;
+}
+
+message TextPart {
+  oneof part_kind {
+    string text = 1;
+    FunctionArg function_arg = 2;
+  }
+}
+
+message FunctionArg {
+  string text = 1;
+}
+
 message Function {
-  string name = 1;
+  TextWithArgs name = 1;
   repeated Line lines = 2;
 }
 
 message FunctionCall {
-  string name = 1;
-  repeated string arguments = 2;
+  TextWithArgs name = 1;
 }
 
 message Command {
-  string text = 1;
-  repeated Command children = 2;
+  TextWithArgs text = 1;
 }

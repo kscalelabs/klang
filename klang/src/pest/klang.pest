@@ -4,10 +4,18 @@ COMMENT = _{
     "/*" ~ (!"*/" ~ ANY)* ~ "*/"
 }
 
-text = { ( ASCII_ALPHANUMERIC | "," | "." | "!" | "?" | "%" | " " | "[" | "]" )+ }
-command = { text }
-function = { ">" ~ text ~ "{" ~ line* ~ "}" }
-function_call = { "\"" ~ text }
+text = { ( ASCII_ALPHANUMERIC | "," | "." | "!" | "?" | "%" | " " )+ }
+
+function_arg = { "[" ~ text ~ "]" }
+text_with_function_args = { (text | function_arg)+ }
+
+function_param = { "[" ~ text ~ "]" }
+text_with_function_params = { (text | function_param)+ }
+
+command = { text_with_function_args }
+function_def = { ">" ~ text_with_function_params ~ "{" ~ line* ~ "}" }
+function_call = { "\"" ~ text_with_function_args }
+
 empty_line = { NEWLINE }
-line = { function | function_call | command | empty_line }
+line = { function_def | function_call | command | empty_line }
 program = { SOI ~ line* ~ EOI }

@@ -1,7 +1,12 @@
 > wave [arm] arm {
-    move [arm] joint 1 to 90
-    move [arm] joint 2 to 90
-    move [arm] joint 3 to 90
+    > wave [arm] joint [joint] twice {
+        move [arm] joint [joint] to 90
+        move [arm] joint [joint] to 0
+    }
+
+    wave [arm] joint 1 twice
+    wave [arm] joint 2 twice
+    wave [arm] joint 3 twice
 }
 
 > wave both arms {
