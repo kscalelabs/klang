@@ -31,7 +31,8 @@ pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<KlangProgram, 
     let ast_program = ir_to_ast(&ir_program)?;
 
     Ok(KlangProgram {
-        program: ast_program,
+        ast_program,
+        ir_program,
     })
 }
 

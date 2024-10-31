@@ -44,7 +44,7 @@ pub fn write_program_to_file(
 ) -> Result<(), ParseError> {
     if binary {
         let mut buf = Vec::new();
-        prost::Message::encode(&program.program, &mut buf).map_err(|e| {
+        prost::Message::encode(&program.ast_program, &mut buf).map_err(|e| {
             ParseError::new(format!(
                 "Error encoding program to file '{}': {}",
                 file_path.display(),
@@ -60,7 +60,7 @@ pub fn write_program_to_file(
             ))
         })?;
     } else {
-        let program_str = format!("{:#?}", program.program);
+        let program_str = format!("{:#?}", program.ast_program);
         fs::write(file_path, &program_str).map_err(|e| {
             ParseError::new(format!(
                 "Error writing program to file '{}': {}",
@@ -71,17 +71,4 @@ pub fn write_program_to_file(
     }
 
     Ok(())
-}
-
-pub fn read_program_from_file(file_path: &Path) -> Result<KlangProgram, ParseError> {
-    let buf = fs::read(file_path).map_err(|e| {
-        ParseError::new(format!(
-            "Error reading file '{}': {}",
-            file_path.display(),
-            e
-        ))
-    })?;
-    let program = prost::Message::decode(&*buf)
-        .map_err(|e| ParseError::new(format!("Error decoding program: {}", e)))?;
-    Ok(KlangProgram { program })
 }
