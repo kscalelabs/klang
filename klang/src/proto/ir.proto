@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ir;
+
+message Program {
+  repeated Command commands = 1;
+}
+
+message Line {
+    oneof line_kind {
+        Function function = 1;
+        FunctionCall function_call = 2;
+        Command command = 3;
+    }
+}
+
+message Function {
+  string name = 1;
+  repeated Line lines = 2;
+}
+
+message FunctionCall {
+  string name = 1;
+  repeated string arguments = 2;
+}
+
+message Command {
+  string text = 1;
+  repeated Command children = 2;
+}

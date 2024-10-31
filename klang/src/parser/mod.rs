@@ -2,45 +2,21 @@ mod ast {
     include!(concat!(env!("OUT_DIR"), "/proto/ast.rs"));
 }
 
-use ast::*;
+mod ir {
+    include!(concat!(env!("OUT_DIR"), "/proto/ir.rs"));
+}
 
 pub mod errors;
-pub mod expressions;
-pub mod functions;
-pub mod literals;
-pub mod statements;
+pub mod lang;
+pub mod passes;
 pub mod structs;
 
 use errors::ParseError;
-use functions::parse_function_def;
+use lang::parse_program;
 use pest::Parser;
 use std::fs;
 use std::path::Path;
 use structs::{KlangProgram, PestParser, Rule};
-
-pub fn parse_program(pair: pest::iterators::Pair<Rule>) -> Result<KlangProgram, ParseError> {
-    let mut functions = Vec::new();
-
-    for function_pair in pair.into_inner() {
-        match function_pair.as_rule() {
-            Rule::function_def => match parse_function_def(function_pair) {
-                Ok(function) => functions.push(function),
-                Err(e) => return Err(e),
-            },
-            Rule::EOI => break,
-            _ => {
-                return Err(ParseError::from_pair(
-                    format!("Unknown rule: {:?}", function_pair.as_rule()),
-                    function_pair,
-                ));
-            }
-        }
-    }
-
-    Ok(KlangProgram {
-        program: Program { functions },
-    })
-}
 
 pub fn parse_string(input: &str) -> Result<KlangProgram, ParseError> {
     match PestParser::parse(Rule::program, input) {
@@ -61,23 +37,38 @@ pub fn parse_file(file_path: &Path) -> Result<KlangProgram, ParseError> {
     parse_string(&unparsed_file)
 }
 
-pub fn write_program_to_file(program: &KlangProgram, file_path: &Path) -> Result<(), ParseError> {
-    let mut buf = Vec::new();
-    prost::Message::encode(&program.program, &mut buf).map_err(|e| {
-        ParseError::new(format!(
-            "Error encoding program to file '{}': {}",
-            file_path.display(),
-            e
-        ))
-    })?;
+pub fn write_program_to_file(
+    program: &KlangProgram,
+    file_path: &Path,
+    binary: bool,
+) -> Result<(), ParseError> {
+    if binary {
+        let mut buf = Vec::new();
+        prost::Message::encode(&program.program, &mut buf).map_err(|e| {
+            ParseError::new(format!(
+                "Error encoding program to file '{}': {}",
+                file_path.display(),
+                e
+            ))
+        })?;
 
-    fs::write(file_path, &buf).map_err(|e| {
-        ParseError::new(format!(
-            "Error writing program to file '{}': {}",
-            file_path.display(),
-            e
-        ))
-    })?;
+        fs::write(file_path, &buf).map_err(|e| {
+            ParseError::new(format!(
+                "Error writing program to file '{}': {}",
+                file_path.display(),
+                e
+            ))
+        })?;
+    } else {
+        let program_str = format!("{:#?}", program.program);
+        fs::write(file_path, &program_str).map_err(|e| {
+            ParseError::new(format!(
+                "Error writing program to file '{}': {}",
+                file_path.display(),
+                e
+            ))
+        })?;
+    }
 
     Ok(())
 }

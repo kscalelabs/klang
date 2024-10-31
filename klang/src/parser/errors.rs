@@ -31,7 +31,11 @@ impl ParseError {
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
+        write!(
+            f,
+            "{} (line: {}, column: {})",
+            self.message, self.line, self.column
+        )
     }
 }
 
