@@ -1,106 +1,21 @@
-WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+WHITESPACE = _{ " " | "\t" }
 COMMENT = _{
     "//" ~ (!("\n" | "\r") ~ ANY)* ~ ("\r"? ~ "\n" | EOI) |
     "/*" ~ (!"*/" ~ ANY)* ~ "*/"
 }
 
-EOL = _{ ";" }
+text = { ( ASCII_ALPHANUMERIC | "," | "." | "!" | "?" | "%" | " " )+ }
 
-// Identifiers
-// -----------
+function_arg = { "[" ~ text ~ "]" }
+text_with_function_args = { (text | function_arg)+ }
 
-identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+function_param = { "[" ~ text ~ "]" }
+text_with_function_params = { (text | function_param)+ }
 
-// Literals
-// --------
+command = { text_with_function_args }
+function_def = { ">" ~ text_with_function_params ~ "{" ~ line* ~ "}" }
+function_call = { "\"" ~ text_with_function_args }
 
-literal = { string | number | boolean }
-
-string_char = { "\\" ~ ANY | !("\"") ~ ANY }
-
-string = @{ "\"" ~ string_char* ~ "\"" }
-
-number = @{
-    "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? ~ unit?
-}
-
-unit = @{
-    "mm" | "cm" | "m" | "km" |
-    "in" | "ft" | "yd" | "mi" |
-    "ms" | "s" | "min" | "hr" |
-    "deg" | "rad"
-}
-
-boolean = @{ "true" | "false" }
-
-// Statements
-// ----------
-
-block = { "{" ~ statement* ~ "}" }
-
-statement = {
-    assignment_stmt |
-    expression_stmt |
-    loop_stmt |
-    break_stmt |
-    return_stmt |
-    empty_stmt
-}
-
-empty_stmt = { EOL }
-
-// Assignments
-// -----------
-
-assignment_stmt = { "let" ~ identifier ~ assign_op ~ expression ~ EOL }
-assign_op = { "=" | "+=" | "-=" | "*=" | "/=" }
-
-// Control Flow
-// ------------
-
-loop_stmt = { "loop" ~ block ~ EOL }
-break_stmt = { "break" ~ EOL }
-return_stmt = { "return" ~ expression ~ EOL }
-
-// Expressions
-// -----------
-
-expression_stmt = { expression ~ EOL }
-expression = { conditional }
-conditional = { logical_or ~ ( "?" ~ expression ~ ":" ~ expression )? }
-logical_or = { logical_and ~ ( "||" ~ logical_and )* }
-logical_and = { equality ~ ( "&&" ~ equality )* }
-equality = { comparison ~ ( equality_op ~ comparison )* }
-equality_op = { "==" | "!=" }
-comparison = { multiplicative ~ ( comparison_op ~ multiplicative )* }
-comparison_op = { "<=" | ">=" | "<" | ">" }
-multiplicative = { additive ~ ( multiplicative_op ~ multiplicative )? }
-multiplicative_op = { "*" | "/" }
-additive = { unary ~ ( additive_op ~ additive )? }
-additive_op = { "+" | "-" }
-unary = { unary_op* ~ postfix }
-unary_op = { "!" | "-" }
-postfix = { primary ~ ( argument_list )? }
-primary = { "(" ~ expression ~ ")" | literal | identifier }
-
-// Function calls
-// --------------
-
-argument_list = { "(" ~ (argument ~ ("," ~ argument)*)? ~ ")" }
-argument = { identifier ~ ":" ~ expression }
-
-// Functions
-// ---------
-
-function_def = {
-    "fn" ~ identifier ~ "(" ~ parameter_list? ~ ")" ~ doc_string? ~ block
-}
-parameter_list = { parameter_value ~ ("," ~ parameter_value)* }
-doc_string = { ":" ~ string }
-parameter_type = @{ "string" | "number" | "boolean" }
-parameter_value = { identifier ~ ":" ~ parameter_type }
-
-// Program
-// -------
-
-program = { SOI ~ function_def* ~ EOI }
+empty_line = { NEWLINE }
+line = { function_def | function_call | command | empty_line }
+program = { SOI ~ line* ~ EOI }

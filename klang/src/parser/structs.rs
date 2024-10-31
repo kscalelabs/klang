@@ -1,4 +1,5 @@
-use super::ast::Program;
+use super::ast::Program as AstProgram;
+use super::ir::Program as IrProgram;
 use pest_derive::Parser;
 
 #[derive(Parser)]
@@ -6,5 +7,6 @@ use pest_derive::Parser;
 pub struct PestParser;
 
 pub struct KlangProgram {
-    pub program: Program,
+    pub ast_program: AstProgram,
+    pub ir_program: IrProgram,
 }

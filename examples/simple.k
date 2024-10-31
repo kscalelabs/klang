@@ -1,10 +1,17 @@
-fn wave(limb: string, joint: number, amount: number) : "Wave a hand back and forth" {
-    let pos = get_position(limb: limb, joint: joint);
-    let pos = set_position(limb: limb, joint: joint, pos: pos + amount);
-    let pos = set_position(limb: limb, joint: joint, pos: pos - amount);
-    return pos;
+> wave [arm] arm {
+    > wave joint [joint] twice {
+        move joint [joint] on the [arm] arm to 90
+        move joint [joint] on the [arm] arm to 0
+    }
+
+    " wave joint [1] twice
+    " wave joint [2] twice
+    " wave joint [3] twice
 }
 
-fn main() : "Wave a hand back and forth a few times" {
-    wave(limb: "right_arm", joint: 0, amount: 45deg);
+> wave both arms {
+    " wave [right] arm
+    " wave [left] arm
 }
+
+" wave both arms

@@ -11,6 +11,9 @@ fn main() {
     config.enable_type_names();
 
     config
-        .compile_protos(&["src/proto/ast.proto"], &["src/proto/"])
+        .compile_protos(
+            &["src/proto/ast.proto", "src/proto/ir.proto"],
+            &["src/proto/"],
+        )
         .unwrap();
 }
