@@ -34,6 +34,7 @@ fn get_function_signature(name: &TextWithArgs) -> (String, Vec<String>) {
 fn match_function_call(
     call_name: &TextWithArgs,
     func_signature: &TextWithArgs,
+    current_arg_map: &HashMap<String, String>,
 ) -> Option<HashMap<String, String>> {
     let mut args = HashMap::new();
     let mut call_iter = call_name.parts.iter();
@@ -55,7 +56,11 @@ fn match_function_call(
                         Some(PartKind::FunctionArg(call_arg)),
                         Some(PartKind::FunctionArg(sig_arg)),
                     ) => {
-                        args.insert(sig_arg.text.clone(), call_arg.text.clone());
+                        if let Some(value) = current_arg_map.get(&call_arg.text) {
+                            args.insert(sig_arg.text.clone(), value.clone());
+                        } else {
+                            args.insert(sig_arg.text.clone(), call_arg.text.clone());
+                        }
                     }
                     _ => {
                         return None;
@@ -83,7 +88,17 @@ fn process_line_with_args(
                     let (call_signature, _) = get_function_signature(name);
                     for (func_sig, (func_def, _)) in functions {
                         if let Some(name_def) = &func_def.name {
-                            if let Some(arg_map) = match_function_call(name, name_def) {
+                            if let Some(mut new_arg_map) =
+                                match_function_call(name, name_def, arg_map)
+                            {
+                                // Merge parent scope arguments with new arguments
+                                // New arguments take precedence over parent scope
+                                for (key, value) in arg_map.iter() {
+                                    new_arg_map
+                                        .entry(key.clone())
+                                        .or_insert_with(|| value.clone());
+                                }
+
                                 if call_stack.contains(func_sig) {
                                     return Err(ParseError::new(format!(
                                         "Recursive function call: {}",
@@ -94,7 +109,10 @@ fn process_line_with_args(
                                 let mut commands = Vec::new();
                                 for inner_line in &func_def.lines {
                                     let mut cmds = process_line_with_args(
-                                        inner_line, functions, call_stack, &arg_map,
+                                        inner_line,
+                                        functions,
+                                        call_stack,
+                                        &new_arg_map,
                                     )?;
                                     commands.append(&mut cmds);
                                 }
