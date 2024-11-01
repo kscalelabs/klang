@@ -50,18 +50,14 @@ jobs:
             source $HOME/.cargo/env
             pip install setuptools-rust
             if [ "${{ runner.os }}" == "Linux" ]; then
-              PROTOC_ZIP=protoc-25.1-linux-x86_64.zip
+              yum install -y protobuf-compiler
             elif [ "${{ runner.os }}" == "macOS" ]; then
-              PROTOC_ZIP=protoc-25.1-osx-x86_64.zip
+              brew install protobuf
             else
               echo "Unsupported OS: ${{ runner.os }}"
               exit 1
             fi
-            curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v25.1/$PROTOC_ZIP
-            unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
-            unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
-            rm -f $PROTOC_ZIP
-            /usr/local/bin/protoc --version
+            protoc --version
           CIBW_ENVIRONMENT: |
             PATH="/usr/local/bin:$HOME/.cargo/bin:$PATH"
             PROTOC="/usr/local/bin/protoc"
