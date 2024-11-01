@@ -40,18 +40,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install cibuildwheel
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y unzip
-            PROTOC_ZIP=protoc-23.4-linux-x86_64.zip
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            brew install unzip
-            PROTOC_ZIP=protoc-23.4-osx-x86_64.zip
-          fi
-          curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v23.4/$PROTOC_ZIP
-          sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
-          sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
-          rm -f $PROTOC_ZIP
         shell: bash
 
       - name: Build package
@@ -61,6 +49,18 @@ jobs:
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             source $HOME/.cargo/env
             pip install setuptools-rust
+            if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get update
+              sudo apt-get install -y unzip
+              PROTOC_ZIP=protoc-23.4-linux-x86_64.zip
+            elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install unzip
+              PROTOC_ZIP=protoc-23.4-osx-x86_64.zip
+            fi
+            curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v23.4/$PROTOC_ZIP
+            sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+            sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+            rm -f $PROTOC_ZIP
           CIBW_ENVIRONMENT: |
             PATH="$HOME/.cargo/bin:$PATH"
             PROTOC="/usr/local/bin/protoc"
