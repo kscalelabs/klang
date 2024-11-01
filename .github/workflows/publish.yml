@@ -51,19 +51,11 @@ jobs:
             pip install setuptools-rust
             if [ "$RUNNER_OS" == "Linux" ]; then
               sudo apt-get update
-              sudo apt-get install -y unzip
-              PROTOC_ZIP=protoc-23.4-linux-x86_64.zip
+              sudo apt-get install -y protobuf-compiler
             elif [ "$RUNNER_OS" == "macOS" ]; then
-              brew install unzip
-              PROTOC_ZIP=protoc-23.4-osx-x86_64.zip
+              brew install protobuf
             fi
-            curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v23.4/$PROTOC_ZIP
-            sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
-            sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
-            rm -f $PROTOC_ZIP
-            # Verify protoc installation and set permissions
-            sudo chmod +x /usr/local/bin/protoc
-            /usr/local/bin/protoc --version
+            protoc --version
           CIBW_ENVIRONMENT: |
             PATH="/usr/local/bin:$HOME/.cargo/bin:$PATH"
             PROTOC="/usr/local/bin/protoc"
@@ -112,9 +104,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository -y ppa:maarten-fonville/protobuf
-          sudo apt-get update
           sudo apt-get install -y libudev-dev pkg-config protobuf-compiler
 
       - name: Cache Cargo registry
@@ -133,7 +122,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-index
 
-      - name: Publish Robstride package to crates.io
+      - name: Publish package to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
