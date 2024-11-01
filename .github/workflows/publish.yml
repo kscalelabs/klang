@@ -51,7 +51,11 @@ jobs:
       - name: Build package
         env:
           CIBW_SKIP: "pp* *-musllinux*"  # Skip PyPy and musllinux builds
-          CIBW_BEFORE_BUILD: "pip install setuptools-rust"
+          CIBW_BEFORE_BUILD: |
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            source $HOME/.cargo/env
+            pip install setuptools-rust
+          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH"'
         run: python -m cibuildwheel --output-dir dist
 
       - name: Upload wheel artifacts
