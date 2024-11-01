@@ -58,12 +58,12 @@ jobs:
               echo "Unsupported OS: ${{ runner.os }}"
               exit 1
             fi
-            protoc --version
+            /usr/local/bin/protoc --version
           CIBW_ENVIRONMENT: |
             PATH="/usr/local/bin:$HOME/.cargo/bin:$PATH"
             PROTOC="/usr/local/bin/protoc"
             CARGO_NET_GIT_FETCH_WITH_CLI=true
-        run: python -m cibuildwheel --output-dir dist
+        run: cibuildwheel --output-dir dist
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v3
