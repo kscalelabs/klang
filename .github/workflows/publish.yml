@@ -61,8 +61,11 @@ jobs:
             sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
             sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
             rm -f $PROTOC_ZIP
+            # Verify protoc installation and set permissions
+            sudo chmod +x /usr/local/bin/protoc
+            /usr/local/bin/protoc --version
           CIBW_ENVIRONMENT: |
-            PATH="$HOME/.cargo/bin:$PATH"
+            PATH="/usr/local/bin:$HOME/.cargo/bin:$PATH"
             PROTOC="/usr/local/bin/protoc"
             CARGO_NET_GIT_FETCH_WITH_CLI=true
         run: python -m cibuildwheel --output-dir dist
