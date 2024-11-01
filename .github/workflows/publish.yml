@@ -61,10 +61,9 @@ jobs:
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             source $HOME/.cargo/env
             pip install setuptools-rust
-            cargo build --bin stub_gen
           CIBW_ENVIRONMENT: |
             PATH="$HOME/.cargo/bin:$PATH"
-            PROTOC=/usr/local/bin/protoc 
+            PROTOC="/usr/local/bin/protoc"
             CARGO_NET_GIT_FETCH_WITH_CLI=true
         run: python -m cibuildwheel --output-dir dist
 
