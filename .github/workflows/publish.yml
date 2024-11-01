@@ -42,13 +42,16 @@ jobs:
           pip install cibuildwheel
           if [ "$RUNNER_OS" == "Linux" ]; then
             sudo apt-get update
-            sudo apt-get install -y software-properties-common
-            sudo add-apt-repository -y ppa:maarten-fonville/protobuf
-            sudo apt-get update
-            sudo apt-get install -y protobuf-compiler
+            sudo apt-get install -y unzip
+            PROTOC_ZIP=protoc-23.4-linux-x86_64.zip
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            brew install protobuf
+            brew install unzip
+            PROTOC_ZIP=protoc-23.4-osx-x86_64.zip
           fi
+          curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v23.4/$PROTOC_ZIP
+          sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc
+          sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*'
+          rm -f $PROTOC_ZIP
         shell: bash
 
       - name: Build package
@@ -59,8 +62,7 @@ jobs:
             source $HOME/.cargo/env
             pip install setuptools-rust
             if command -v apt-get &> /dev/null; then
-              apt-get update
-              apt-get install -y protobuf-compiler
+              apt-get update && apt-get install -y protobuf-compiler
             elif command -v brew &> /dev/null; then
               brew install protobuf
             fi
