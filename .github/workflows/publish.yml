@@ -54,6 +54,9 @@ jobs:
               sudo apt-get install -y protobuf-compiler
             elif [ "$RUNNER_OS" == "macOS" ]; then
               brew install protobuf
+            else
+              echo "Unsupported OS: $RUNNER_OS"
+              exit 1
             fi
             protoc --version
           CIBW_ENVIRONMENT: |
